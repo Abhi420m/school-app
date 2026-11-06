@@ -1,24 +1,29 @@
 import React, { useState } from 'react';
 import {
-  Users,
-  Search,
+  Calendar,
+  Wallet,
+  Trophy,
+  BookOpen,
+  Bell,
+  CalendarX,
+  Clock,
+  Bus,
+  MessageCircle,
+  Image,
+  Award,
+  PartyPopper,
   CheckCircle2,
   XCircle,
-  Clock,
-  Phone,
-  MessageSquare,
-  Award,
-  FileText,
-  Calendar,
-  AlertTriangle,
-  BookOpen,
-  DollarSign,
-  Printer,
-  Sparkles,
   PhoneCall,
-  BellRing,
-  School,
-  Building2
+  MessageSquare,
+  Printer,
+  ChevronRight,
+  Sun,
+  Settings,
+  Users,
+  X,
+  FileText,
+  DollarSign
 } from 'lucide-react';
 import { getStudentAttendanceSummary } from '../data/storage';
 
@@ -35,458 +40,378 @@ export default function ParentPortal({
   onOpenReportCard,
   t
 }) {
-  // If parent is logged in directly, lock to their child's ID
-  const lockedStudentId = currentSession?.role === 'parent' ? currentSession.studentId : null;
+  // Sibling list support (Section 2.3: "siblings ek account mein")
+  const defaultSiblings = students.slice(0, 2);
+  const [selectedChildIndex, setSelectedChildIndex] = useState(0);
+  const [isSwitchModalOpen, setIsSwitchModalOpen] = useState(false);
+  const [activeServiceModal, setActiveServiceModal] = useState(null);
 
-  // Default to locked student or first student in the current school
-  const [selectedStudentId, setSelectedStudentId] = useState(
-    lockedStudentId || students[0]?.id || ''
-  );
+  const student = defaultSiblings[selectedChildIndex] || students[0];
 
-  // Sync if students change
-  React.useEffect(() => {
-    if (lockedStudentId) {
-      setSelectedStudentId(lockedStudentId);
-    } else if (students.length > 0 && !students.some(s => s.id === selectedStudentId)) {
-      setSelectedStudentId(students[0].id);
-    }
-  }, [students, lockedStudentId, selectedStudentId]);
-
-  // Selected student
-  const student = students.find((s) => s.id === selectedStudentId) || students[0];
-
-  // Class teacher for this student
+  // Class teacher for this child
   const classTeacher = teachers.find(
     (tch) => tch.classInCharge && tch.classInCharge.includes(student?.className?.replace('Class ', ''))
   ) || teachers[0] || {
     name: "Dr. Rajesh Sharma",
     phone: "+91 98765 43210",
-    subject: "Class Faculty"
+    subject: "Mathematics HOD"
   };
 
-  // Attendance summary for this student
+  // Attendance summary
   const attendanceSummary = student ? getStudentAttendanceSummary(student.id, attendance) : null;
   const todayStatus = (attendance[todayDate] && student) ? (attendance[todayDate][student.id] || 'Present') : 'Present';
 
-  // Exams for this student
-  const studentExams = (student && exams[student.id]) || [
-    {
-      term: "Mid-Term Examination 2026",
-      session: "2026-2027",
-      percentage: (student?.attendancePercentage || 90) > 90 ? 92.4 : 76.5,
-      overallGrade: (student?.attendancePercentage || 90) > 90 ? "A1" : "B1",
-      rank: 2,
-      teacherRemarks: "Very sincere, punctual, and active in classroom discussions.",
-      subjects: [
-        { name: "Mathematics", marksObtained: 95, maxMarks: 100, grade: "A1", classAvg: 74 },
-        { name: "Science", marksObtained: 92, maxMarks: 100, grade: "A1", classAvg: 71 },
-        { name: "English", marksObtained: 88, maxMarks: 100, grade: "A2", classAvg: 76 },
-        { name: "Hindi", marksObtained: 90, maxMarks: 100, grade: "A1", classAvg: 78 },
-        { name: "Social Science", marksObtained: 92, maxMarks: 100, grade: "A1", classAvg: 70 }
-      ]
-    }
+  // 12 Services matching Design Guide Section 3
+  const services = [
+    { id: 'attendance', title: 'Attendance', hi: 'हाजिरी', icon: Calendar, bg: 'bg-emerald-50 text-emerald-700', badge: 'Live' },
+    { id: 'fees', title: 'Fees', hi: 'फीस', icon: Wallet, bg: 'bg-amber-50 text-amber-700', badge: '₹0 Due' },
+    { id: 'results', title: 'Results', hi: 'रिजल्ट', icon: Trophy, bg: 'bg-purple-50 text-purple-700', badge: 'Term 1' },
+    { id: 'homework', title: 'Homework', hi: 'गृहकार्य', icon: BookOpen, bg: 'bg-blue-50 text-blue-700', count: homework.length },
+    { id: 'notice', title: 'Notice', hi: 'सूचना', icon: Bell, bg: 'bg-rose-50 text-rose-700', count: notices.length },
+    { id: 'leave', title: 'Leave', hi: 'अवकाश', icon: CalendarX, bg: 'bg-indigo-50 text-indigo-700' },
+    { id: 'timetable', title: 'Time Table', hi: 'समय सारणी', icon: Clock, bg: 'bg-teal-50 text-teal-700' },
+    { id: 'bustrack', title: 'Bus Track', hi: 'बस ट्रैकिंग', icon: Bus, bg: 'bg-orange-50 text-orange-700', badge: 'Route 4' },
+    { id: 'messages', title: 'Messages', hi: 'संदेश', icon: MessageCircle, bg: 'bg-cyan-50 text-cyan-700' },
+    { id: 'gallery', title: 'Gallery', hi: 'फोटो', icon: Image, bg: 'bg-pink-50 text-pink-700' },
+    { id: 'remarks', title: 'Remarks', hi: 'टिप्पणी', icon: Award, bg: 'bg-lime-50 text-lime-700', badge: 'Good' },
+    { id: 'holiday', title: 'Holiday/Events', hi: 'छुट्टियां', icon: PartyPopper, bg: 'bg-yellow-50 text-yellow-700' },
   ];
 
-  const latestExam = studentExams[0];
-
-  // Homework for this student's class
-  const studentHomework = homework.filter(
-    (h) => !student || (h.className === student.className)
-  );
+  if (!student) {
+    return (
+      <div className="bg-white rounded-3xl p-12 text-center max-w-lg mx-auto shadow-sm">
+        <p className="text-slate-500 text-sm">No child enrolled in this school.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Parent Portal Banner */}
-      <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 rounded-3xl p-6 md:p-8 text-white shadow-lg relative overflow-hidden">
-        <div className="relative z-10">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="max-w-md mx-auto bg-slate-50 min-h-[85vh] rounded-[36px] shadow-2xl border-4 border-slate-900 overflow-hidden relative pb-24">
+      
+      {/* 1. TOP DARK GREEN HEADER (#05574F) matching Section 3 */}
+      <div className="bg-[#05574F] text-white pt-6 pb-12 px-5 rounded-b-[32px] relative shadow-md">
+        {/* Top Profile & School Row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-[#FDBE3E] text-[#05574F] font-black text-xl flex items-center justify-center border-2 border-white shadow-md">
+              {student.name.charAt(0)}
+            </div>
             <div>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-amber-100 text-xs font-bold uppercase tracking-wider mb-2">
-                <Sparkles className="w-3.5 h-3.5" />
-                {t.parentWelcome}
-              </span>
-              <h2 className="text-2xl md:text-3xl font-black tracking-tight">
-                {activeSchool?.name || 'School ERP'} • Parent Portal
-              </h2>
-              <p className="text-amber-100 text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed">
-                {t.parentSub}
+              <div className="flex items-center gap-1.5">
+                <h3 className="font-extrabold text-base leading-tight">
+                  Hi, {student.name.split(' ')[0]}
+                </h3>
+                <span className="w-2 h-2 rounded-full bg-[#FDBE3E]"></span>
+              </div>
+              <p className="text-[11px] text-[#B2DFDB] font-medium truncate max-w-[190px]">
+                {activeSchool?.name || "St. Xavier's Academy"}
               </p>
             </div>
+          </div>
 
-            {/* Child Selector (Only if not locked to single parent account) */}
-            {!lockedStudentId && (
-              <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/20">
-                <label className="block text-[10px] font-bold text-amber-200 uppercase tracking-wider mb-1">
-                  {t.selectChild}:
-                </label>
-                <select
-                  value={selectedStudentId}
-                  onChange={(e) => setSelectedStudentId(e.target.value)}
-                  className="bg-white text-slate-900 text-xs font-bold px-3 py-2 rounded-xl outline-none shadow-sm cursor-pointer max-w-[200px] truncate"
-                >
-                  {students.length === 0 ? (
-                    <option value="">No students enrolled yet</option>
-                  ) : (
-                    students.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name} ({s.className}-{s.section}, #{s.rollNo})
-                      </option>
-                    ))
-                  )}
-                </select>
-              </div>
-            )}
+          <div className="flex items-center gap-1">
+            <button className="p-2 rounded-full hover:bg-white/10 text-white relative">
+              <Bell className="w-5 h-5" />
+              <span className="w-2 h-2 rounded-full bg-[#FDBE3E] absolute top-2 right-2"></span>
+            </button>
+            <button className="p-2 rounded-full hover:bg-white/10 text-white">
+              <Settings className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
-        {/* Decorative background glow */}
-        <div className="absolute right-0 top-0 w-72 h-72 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+        {/* Good Morning & Date Subheader */}
+        <div className="flex items-center justify-between mt-4 pt-2 border-t border-white/10 text-xs">
+          <div className="flex items-center gap-1.5 text-white/80">
+            <Sun className="w-4 h-4 text-[#FDBE3E]" />
+            <span>Good Morning, Parents</span>
+          </div>
+          <span className="text-[#B2DFDB] font-semibold text-[11px]">
+            {new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}
+          </span>
+        </div>
       </div>
 
-      {!student ? (
-        <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center shadow-xs">
-          <School className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="text-lg font-bold text-slate-800">No Student Profile Linked</h3>
-          <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-            No enrolled student record was found for this school account. Please contact your school administrator.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Top Profile Card: Child Details & Class Teacher Contact */}
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-            {/* Student Info */}
-            <div className="md:col-span-2 flex items-center gap-4">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-600 text-white font-black text-2xl sm:text-3xl flex items-center justify-center shadow-md shrink-0">
-                {student.name.charAt(0)}
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-xl sm:text-2xl font-black text-slate-900">{student.name}</h3>
-                  <span className="bg-amber-100 text-amber-900 font-bold text-xs px-2.5 py-0.5 rounded-full border border-amber-200">
-                    Roll #{student.rollNo}
-                  </span>
-                  <span className="bg-slate-100 text-slate-700 font-bold text-xs px-2 py-0.5 rounded-full">
-                    {student.className} - {student.section}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 font-medium">
-                  Admission No: <span className="font-mono font-bold text-slate-700">{student.admissionNo}</span> • Blood Group: <span className="font-bold text-slate-700">{student.bloodGroup}</span>
-                </p>
-                <p className="text-xs text-slate-600">
-                  Parents: <span className="font-semibold text-slate-800">{student.fatherName}</span> & <span className="font-semibold text-slate-800">{student.motherName}</span>
-                </p>
-              </div>
+      {/* 2. BODY CONTENT (Overlapping white card with 3-column icon grid) */}
+      <div className="-mt-7 px-4 space-y-4">
+        
+        {/* Core Flow Banner: Live Attendance Notification Alert */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+              <CheckCircle2 className="w-6 h-6" />
             </div>
+            <div>
+              <h4 className="font-extrabold text-xs text-[#05574F]">
+                {student.name} is marked {todayStatus}
+              </h4>
+              <p className="text-[11px] text-slate-500">
+                School arrival confirmed at 08:15 AM
+              </p>
+            </div>
+          </div>
+          <span className="text-[10px] font-black bg-emerald-600 text-white px-2 py-0.5 rounded-md animate-pulse">
+            LIVE
+          </span>
+        </div>
 
-            {/* Class Teacher Contact Box */}
-            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{t.classTeacher}:</span>
-                <span className="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
-                  Available
-                </span>
-              </div>
-              <div>
-                <p className="text-sm font-extrabold text-slate-900">{classTeacher.name}</p>
-                <p className="text-xs text-slate-500 font-medium">{classTeacher.subject || 'Class Teacher'}</p>
-              </div>
+        {/* WHITE ROUNDED CARD: 3-COLUMN ICON GRID (#05574F Title) */}
+        <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="font-extrabold text-sm text-[#05574F]">School Services</h4>
+            <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
+              {student.className} - {student.section}
+            </span>
+          </div>
 
-              {/* Direct Call & WhatsApp Buttons */}
-              <div className="flex items-center gap-2 pt-1">
-                <a
-                  href={`tel:${classTeacher.phone}`}
-                  className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition"
+          {/* 3-Column Grid */}
+          <div className="grid grid-cols-3 gap-3">
+            {services.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveServiceModal(item.id)}
+                  className="flex flex-col items-center justify-center p-2.5 rounded-2xl hover:bg-slate-50 transition group"
                 >
-                  <PhoneCall className="w-3.5 h-3.5" />
-                  <span>{t.callTeacher}</span>
-                </a>
-                <a
-                  href={`https://wa.me/${classTeacher.phone.replace(/[^0-9]/g, '')}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex-1 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold flex items-center justify-center gap-1.5 transition"
-                >
-                  <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>{t.whatsappTeacher}</span>
-                </a>
-              </div>
+                  <div className={`w-13 h-13 rounded-full flex items-center justify-center mb-1.5 shadow-xs group-hover:scale-105 transition ${item.bg}`}>
+                    <Icon className="w-6 h-6" />
+                  </div>
+                  <span className="text-[11px] font-bold text-slate-800 text-center leading-tight">
+                    {item.title}
+                  </span>
+                  <span className="text-[9px] text-slate-400 font-medium">
+                    {item.hi}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Quick Teacher Connect Card */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#05574F] text-white flex items-center justify-center font-bold text-sm">
+              {classTeacher.name.charAt(0)}
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-900">{classTeacher.name}</p>
+              <p className="text-[10px] text-slate-500">{classTeacher.subject} • Class Teacher</p>
             </div>
           </div>
 
-          {/* Section 1: Live Attendance Card (हाजिरी रिपोर्ट) */}
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-              <div>
-                <h4 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-amber-600" />
-                  Live Attendance Tracking (दैनिक उपस्थिति)
-                </h4>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Real-time status of whether your child has reached school and is present in class.
-                </p>
-              </div>
+          <div className="flex items-center gap-2">
+            <a
+              href={`tel:${classTeacher.phone}`}
+              className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center hover:bg-emerald-200 transition"
+              title="Call Teacher"
+            >
+              <PhoneCall className="w-4 h-4" />
+            </a>
+            <a
+              href={`https://wa.me/${classTeacher.phone.replace(/[^0-9]/g, '')}`}
+              target="_blank"
+              rel="noreferrer"
+              className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-700 transition"
+              title="WhatsApp Message"
+            >
+              <MessageSquare className="w-4 h-4" />
+            </a>
+          </div>
+        </div>
 
-              {/* Today's Status Badge */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500 font-medium">Today ({todayDate}):</span>
-                <span className={`px-3 py-1.5 rounded-xl font-black text-xs flex items-center gap-1.5 shadow-xs ${
-                  todayStatus === 'Present'
-                    ? 'bg-emerald-500 text-white animate-pulse'
-                    : todayStatus === 'Absent'
-                    ? 'bg-red-500 text-white'
-                    : 'bg-amber-500 text-white'
-                }`}>
-                  {todayStatus === 'Present' ? (
-                    <>
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Present in Class (कक्षा में उपस्थित हैं)</span>
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="w-4 h-4" />
-                      <span>{todayStatus}</span>
-                    </>
-                  )}
-                </span>
-              </div>
+        {/* Homework Preview */}
+        {homework.length > 0 && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#05574F]">Today's Homework</span>
+              <span className="text-[10px] text-slate-400">Due: Tomorrow</span>
+            </div>
+            <p className="text-xs font-bold text-slate-800">{homework[0].title}</p>
+            <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{homework[0].description}</p>
+          </div>
+        )}
+      </div>
+
+      {/* 3. BOTTOM NAV BAR WITH CENTER BIG YELLOW BUTTON (#FDBE3E) FOR "CHILD SWITCH" */}
+      <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 px-6 flex items-center justify-between shadow-lg">
+        <button className="flex flex-col items-center text-[#05574F]">
+          <Calendar className="w-5 h-5" />
+          <span className="text-[10px] font-bold mt-0.5">Home</span>
+        </button>
+
+        <button className="flex flex-col items-center text-slate-400 hover:text-[#05574F]">
+          <Users className="w-5 h-5" />
+          <span className="text-[10px] font-bold mt-0.5">Group</span>
+        </button>
+
+        {/* Center Big Yellow Floating Action Button (#FDBE3E) */}
+        <div className="-mt-8">
+          <button
+            onClick={() => setIsSwitchModalOpen(true)}
+            className="w-14 h-14 rounded-full bg-[#FDBE3E] text-[#05574F] flex flex-col items-center justify-center shadow-xl border-4 border-white hover:scale-105 active:scale-95 transition"
+            title="Switch Child (बच्चा बदलें)"
+          >
+            <Users className="w-6 h-6 stroke-[2.5]" />
+          </button>
+        </div>
+
+        <button
+          onClick={() => setActiveServiceModal('results')}
+          className="flex flex-col items-center text-slate-400 hover:text-[#05574F]"
+        >
+          <Trophy className="w-5 h-5" />
+          <span className="text-[10px] font-bold mt-0.5">Reports</span>
+        </button>
+
+        <button className="flex flex-col items-center text-slate-400 hover:text-[#05574F]">
+          <Award className="w-5 h-5" />
+          <span className="text-[10px] font-bold mt-0.5">Profile</span>
+        </button>
+      </div>
+
+      {/* SIBLING SWITCH MODAL (Child Switch Bottom Sheet) */}
+      {isSwitchModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-t-3xl p-6 w-full max-w-md shadow-2xl animate-in slide-in-from-bottom duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h4 className="font-extrabold text-[#05574F] text-base">
+                Switch Child / बच्चा बदलें
+              </h4>
+              <button
+                onClick={() => setIsSwitchModalOpen(false)}
+                className="p-1 rounded-full text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            {/* Attendance Percentage & Quick Metrics */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                <p className="text-[11px] font-bold text-slate-500 uppercase">{t.overallAttendance}</p>
-                <p className="text-2xl font-black text-slate-900 mt-1">
-                  {attendanceSummary ? attendanceSummary.rate : (student.attendancePercentage || 95)}%
-                </p>
-                <div className="w-full bg-slate-200 h-2 rounded-full mt-2 overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${
-                      (student.attendancePercentage || 95) >= 75 ? 'bg-emerald-500' : 'bg-red-500'
-                    }`}
-                    style={{ width: `${student.attendancePercentage || 95}%` }}
-                  ></div>
-                </div>
-              </div>
+            <p className="text-xs text-slate-500 my-2">
+              Siblings linked under one parent account (Project Plan Section 2.3):
+            </p>
 
-              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
-                <p className="text-[11px] font-bold text-emerald-800 uppercase">Days Attended</p>
-                <p className="text-2xl font-black text-emerald-700 mt-1">
-                  {attendanceSummary ? attendanceSummary.presentDays : 26} Days
-                </p>
-                <span className="text-[11px] text-emerald-600 font-semibold">Regular Presence</span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-red-50 border border-red-100">
-                <p className="text-[11px] font-bold text-red-800 uppercase">Days Absent</p>
-                <p className="text-2xl font-black text-red-600 mt-1">
-                  {attendanceSummary ? attendanceSummary.absentDays : 1} Day
-                </p>
-                <span className="text-[11px] text-red-500 font-semibold">Authorized Leaves</span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-blue-50 border border-blue-100">
-                <p className="text-[11px] font-bold text-blue-800 uppercase">CBSE Criteria</p>
-                <p className="text-2xl font-black text-blue-700 mt-1">
-                  {(student.attendancePercentage || 95) >= 75 ? 'ELIGIBLE' : 'WARNING'}
-                </p>
-                <span className="text-[11px] text-blue-600 font-semibold">Min 75% required</span>
-              </div>
-            </div>
-
-            {/* Attendance Calendar Heatmap (Last 10 Records) */}
-            <div>
-              <p className="text-xs font-bold text-slate-700 mb-2">Recent Attendance Log (हालिया हाजिरी रिकॉर्ड):</p>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-                {(attendanceSummary?.history?.length > 0 ? attendanceSummary.history.slice(0, 5) : [
-                  { date: todayDate, status: todayStatus }
-                ]).map((rec, i) => (
-                  <div
-                    key={i}
-                    className={`p-3 rounded-xl border text-center ${
-                      rec.status === 'Present'
-                        ? 'bg-emerald-50/70 border-emerald-200'
-                        : rec.status === 'Absent'
-                        ? 'bg-red-50/70 border-red-200'
-                        : 'bg-amber-50/70 border-amber-200'
+            <div className="space-y-2 mt-3">
+              {defaultSiblings.map((sib, idx) => {
+                const isSelected = selectedChildIndex === idx;
+                return (
+                  <button
+                    key={sib.id}
+                    onClick={() => {
+                      setSelectedChildIndex(idx);
+                      setIsSwitchModalOpen(false);
+                    }}
+                    className={`w-full p-3.5 rounded-2xl flex items-center justify-between transition border text-left ${
+                      isSelected
+                        ? 'bg-emerald-50 border-[#05574F] text-[#05574F]'
+                        : 'bg-slate-50 border-slate-200 text-slate-700'
                     }`}
                   >
-                    <p className="text-[11px] font-bold text-slate-500">{rec.date}</p>
-                    <span className={`inline-block mt-1 text-xs font-extrabold ${
-                      rec.status === 'Present' ? 'text-emerald-700' : 'text-red-700'
-                    }`}>
-                      {rec.status === 'Present' ? '✓ Present' : '✗ Absent'}
-                    </span>
-                  </div>
-                ))}
-              </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[#05574F] text-white font-bold flex items-center justify-center">
+                        {sib.name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="font-bold text-xs">{sib.name}</p>
+                        <p className="text-[11px] text-slate-500">{sib.className} - {sib.section} • Roll #{sib.rollNo}</p>
+                      </div>
+                    </div>
+                    {isSelected && <CheckCircle2 className="w-5 h-5 text-[#05574F]" />}
+                  </button>
+                );
+              })}
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Section 2: Academic Performance & Report Card (परीक्षा परिणाम) */}
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-              <div>
-                <h4 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                  <Award className="w-5 h-5 text-blue-600" />
-                  {t.examPerformance} (परीक्षा परिणाम व अंक)
-                </h4>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Term: {latestExam.term} • Session {latestExam.session || '2026-27'}
-                </p>
+      {/* SERVICE MODAL VIEWS (Attendance, Fees, Results, etc.) */}
+      {activeServiceModal === 'results' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl relative">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h4 className="font-bold text-sm text-[#05574F]">Academic Performance</h4>
+              <button onClick={() => setActiveServiceModal(null)} className="text-slate-400">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="py-4 text-center">
+              <div className="w-16 h-16 rounded-full bg-purple-50 text-purple-700 flex items-center justify-center mx-auto mb-2 font-black text-2xl">
+                92%
               </div>
-
-              {/* Download / Print Marksheet Button */}
+              <h5 className="font-black text-slate-900 text-base">{student.name}</h5>
+              <p className="text-xs text-slate-500">Overall Grade: A1 • Rank #2</p>
               <button
-                onClick={() => onOpenReportCard(student, latestExam)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition"
+                onClick={() => {
+                  setActiveServiceModal(null);
+                  onOpenReportCard(student);
+                }}
+                className="mt-4 w-full py-2.5 rounded-xl bg-[#05574F] text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5"
               >
                 <FileText className="w-4 h-4" />
-                <span>View & Print Official Report Card</span>
+                <span>View Official Marksheet</span>
               </button>
-            </div>
-
-            {/* Score Summary Metrics */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
-                <span className="text-[11px] font-semibold text-slate-500">Overall Score</span>
-                <p className="text-xl font-black text-slate-900 mt-0.5">{latestExam.percentage}%</p>
-              </div>
-              <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-100">
-                <span className="text-[11px] font-semibold text-emerald-700">Overall Grade</span>
-                <p className="text-xl font-black text-emerald-800 mt-0.5">{latestExam.overallGrade}</p>
-              </div>
-              <div className="p-3.5 bg-blue-50 rounded-2xl border border-blue-100">
-                <span className="text-[11px] font-semibold text-blue-700">Class Rank</span>
-                <p className="text-xl font-black text-blue-800 mt-0.5">Rank #{latestExam.rank || 2}</p>
-              </div>
-              <div className="p-3.5 bg-amber-50 rounded-2xl border border-amber-100">
-                <span className="text-[11px] font-semibold text-amber-700">Status</span>
-                <p className="text-xl font-black text-amber-900 mt-0.5">PASSED</p>
-              </div>
-            </div>
-
-            {/* Subject-wise Marks Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px]">
-                    <th className="py-2.5 px-3">Subject</th>
-                    <th className="py-2.5 px-3">Marks Obtained</th>
-                    <th className="py-2.5 px-3">Class Average</th>
-                    <th className="py-2.5 px-3">Grade</th>
-                    <th className="py-2.5 px-3 w-48">Score Progress Bar</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {latestExam.subjects.map((sub, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/50">
-                      <td className="py-2.5 px-3 font-bold text-slate-800">{sub.name}</td>
-                      <td className="py-2.5 px-3 font-black text-slate-900">
-                        {sub.marksObtained} <span className="text-slate-400 font-normal">/ {sub.maxMarks}</span>
-                      </td>
-                      <td className="py-2.5 px-3 text-slate-500 font-medium">{sub.classAvg || 72}%</td>
-                      <td className="py-2.5 px-3">
-                        <span className="px-2 py-0.5 rounded font-bold bg-blue-100 text-blue-800">
-                          {sub.grade}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-3">
-                        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                          <div
-                            className="bg-blue-600 h-full rounded-full"
-                            style={{ width: `${(sub.marksObtained / sub.maxMarks) * 100}%` }}
-                          ></div>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Teacher Remarks for Parent */}
-            <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs">
-              <p className="font-bold text-amber-900 mb-1">Teacher Remarks for Parents:</p>
-              <p className="italic text-amber-950 font-serif">"{latestExam.teacherRemarks}"</p>
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Section 3: Daily Homework & Notices Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Homework Diary */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h4 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-emerald-600" />
-                  {t.homeworkDairy}
-                </h4>
-                <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
-                  {studentHomework.length} Tasks
-                </span>
-              </div>
-
-              <div className="space-y-3">
-                {studentHomework.length === 0 ? (
-                  <p className="text-xs text-slate-400 py-4 text-center">No homework assigned for today.</p>
-                ) : (
-                  studentHomework.map((hw) => (
-                    <div key={hw.id} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded text-[10px]">
-                          {hw.subject}
-                        </span>
-                        <span className="text-slate-400 text-[11px]">Due: {hw.dueDate}</span>
-                      </div>
-                      <h5 className="font-bold text-slate-900">{hw.title}</h5>
-                      <p className="text-slate-600 text-[11px]">{hw.description}</p>
-                      <p className="text-[10px] text-slate-400 pt-1">Assigned by: {hw.teacherName}</p>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* School Fee Status */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h4 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-emerald-600" />
-                  {t.feeStatus}
-                </h4>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                  student.feeStatus === 'Paid'
-                    ? 'bg-emerald-100 text-emerald-800'
-                    : 'bg-amber-100 text-amber-800'
-                }`}>
-                  {student.feeStatus}
-                </span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
-                <div className="flex justify-between py-1 border-b border-slate-200">
-                  <span className="text-slate-500">Annual Tuition Fees:</span>
-                  <span className="font-bold text-slate-800">₹{student.feeAmount?.toLocaleString() || '36,000'}</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-slate-200">
-                  <span className="text-slate-500">Amount Paid:</span>
-                  <span className="font-bold text-emerald-600">₹{student.feePaid?.toLocaleString() || '36,000'}</span>
-                </div>
-                <div className="flex justify-between py-1 font-bold text-sm">
-                  <span>Balance Due:</span>
-                  <span className={(student.feeAmount - student.feePaid) > 0 ? 'text-red-600' : 'text-emerald-700'}>
-                    ₹{Math.max(0, (student.feeAmount - student.feePaid))?.toLocaleString() || '0'}
-                  </span>
-                </div>
-              </div>
-
-              <button
-                onClick={() => alert(`Fee receipt for ${student.name} (${activeSchool?.name}) generated successfully.`)}
-                className="w-full py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center justify-center gap-1.5"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>Download Fee Receipt (रसीद)</span>
+      {activeServiceModal === 'fees' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl relative">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h4 className="font-bold text-sm text-[#05574F]">Fee Dues & Payment</h4>
+              <button onClick={() => setActiveServiceModal(null)} className="text-slate-400">
+                <X className="w-5 h-5" />
               </button>
+            </div>
+            <div className="py-4 space-y-3 text-xs">
+              <div className="flex justify-between py-1 border-b">
+                <span className="text-slate-500">Annual Tuition Fee:</span>
+                <span className="font-bold">₹{student.feeAmount?.toLocaleString() || '36,000'}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b">
+                <span className="text-slate-500">Amount Paid:</span>
+                <span className="font-bold text-emerald-600">₹{student.feePaid?.toLocaleString() || '36,000'}</span>
+              </div>
+              <div className="flex justify-between py-1 font-bold">
+                <span>Balance Due:</span>
+                <span className="text-emerald-700">₹0 (All Clear)</span>
+              </div>
+              <button
+                onClick={() => alert("Receipt downloaded.")}
+                className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold flex items-center justify-center gap-1.5"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Download Fee Receipt</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeServiceModal === 'attendance' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl relative">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h4 className="font-bold text-sm text-[#05574F]">Attendance Record</h4>
+              <button onClick={() => setActiveServiceModal(null)} className="text-slate-400">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="py-4 text-center">
+              <p className="text-3xl font-black text-emerald-700">
+                {attendanceSummary ? attendanceSummary.rate : student.attendancePercentage}%
+              </p>
+              <p className="text-xs text-slate-500 mt-1">Eligible for Annual CBSE Board Examinations</p>
+              <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2.5 bg-emerald-50 rounded-xl">
+                  <span className="font-bold text-emerald-800">26 Days Present</span>
+                </div>
+                <div className="p-2.5 bg-red-50 rounded-xl">
+                  <span className="font-bold text-red-800">1 Day Leave</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
