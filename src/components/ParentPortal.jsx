@@ -577,43 +577,105 @@ export default function ParentPortal({
 
       {/* SERVICE MODAL VIEWS (Attendance, Fees, Results, etc.) */}
       {activeServiceModal === 'results' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-md w-full p-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h4 className="font-bold text-sm text-[#05574F]">Academic Performance</h4>
-              <button onClick={() => setActiveServiceModal(null)} className="text-slate-400">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center">
+                  <Trophy className="w-4 h-4" />
+                </div>
+                <h4 className="font-extrabold text-sm text-[#05574F]">
+                  Academic Test & Exam Results (परीक्षा व टेस्ट परिणाम)
+                </h4>
+              </div>
+              <button onClick={() => setActiveServiceModal(null)} className="text-slate-400 hover:text-slate-700">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="py-4 text-center">
-              <div className="w-16 h-16 rounded-full bg-purple-50 text-purple-700 flex items-center justify-center mx-auto mb-2 font-black text-2xl shadow-xs">
-                {studentPercentage}
-              </div>
-              <h5 className="font-black text-slate-900 text-base">{student.name}</h5>
-              <p className="text-xs text-slate-500">
-                Grade: <strong className="text-emerald-700">{studentGrade}</strong> • Rank #{latestExam?.rank || (parseInt(student.rollNo) % 10 + 1)}
-              </p>
-              {latestExam && (
-                <div className="mt-3 p-3 bg-slate-50 rounded-2xl text-left text-xs border border-slate-100">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
-                    {latestExam.term}
-                  </span>
-                  <div className="flex justify-between font-bold text-slate-800">
-                    <span>Marks Obtained:</span>
-                    <span>{latestExam.obtainedTotal} / {latestExam.maxTotal}</span>
-                  </div>
+
+            <div className="py-3">
+              <div className="text-center pb-3 border-b border-slate-100">
+                <div className="w-14 h-14 rounded-full bg-purple-50 text-purple-700 flex items-center justify-center mx-auto mb-1.5 font-black text-xl shadow-xs">
+                  {studentPercentage}
                 </div>
-              )}
-              <button
-                onClick={() => {
-                  setActiveServiceModal(null);
-                  onOpenReportCard(student, latestExam);
-                }}
-                className="mt-4 w-full py-2.5 rounded-xl bg-[#05574F] text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 hover:bg-emerald-800 transition"
-              >
-                <FileText className="w-4 h-4 text-[#FDBE3E]" />
-                <span>View Official CBSE Report Card</span>
-              </button>
+                <h5 className="font-black text-slate-900 text-sm">{student.name}</h5>
+                <p className="text-[11px] text-slate-500 font-medium">
+                  Class: <strong>{student.className}-{student.section}</strong> • Roll #{student.rollNo} • Grade: <strong className="text-emerald-700">{studentGrade}</strong>
+                </p>
+              </div>
+
+              {/* List of All Tests / Exams (Weekly Tests, Unit Tests, Final Exams) */}
+              <div className="mt-3 space-y-3">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  Recorded Tests & Marks (शिक्षक द्वारा दर्ज टेस्ट व नंबर):
+                </p>
+                {stuExams.length > 0 ? (
+                  stuExams.map((ex, idx) => (
+                    <div key={idx} className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-slate-900">{ex.term}</span>
+                        <span className="text-[10px] bg-purple-100 text-purple-800 font-black px-2 py-0.5 rounded-full">
+                          Grade {ex.overallGrade} ({ex.percentage}%)
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-xs text-slate-600 font-semibold">
+                        <span>Total Score:</span>
+                        <span className="font-black text-slate-900">{ex.obtainedTotal} / {ex.maxTotal}</span>
+                      </div>
+
+                      {/* Subject Marks Breakdown */}
+                      {ex.subjects && ex.subjects.length > 0 && (
+                        <div className="pt-2 border-t border-slate-200/80 space-y-1">
+                          <p className="text-[10px] font-bold text-slate-500 uppercase">Subject-Wise Marks:</p>
+                          <div className="grid grid-cols-1 gap-1">
+                            {ex.subjects.map((sub, sIdx) => (
+                              <div key={sIdx} className="flex justify-between text-[11px] bg-white p-1.5 rounded-lg border border-slate-100">
+                                <span className="font-medium text-slate-700">{sub.name}</span>
+                                <span className="font-bold text-slate-900">
+                                  {sub.marksObtained} <span className="text-slate-400 font-normal">/ {sub.maxMarks}</span>
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {ex.teacherRemarks && (
+                        <p className="text-[10px] text-slate-500 italic mt-1">
+                          Remarks: "{ex.teacherRemarks}"
+                        </p>
+                      )}
+
+                      <button
+                        onClick={() => {
+                          setActiveServiceModal(null);
+                          onOpenReportCard(student, ex);
+                        }}
+                        className="mt-2 w-full py-2 rounded-xl bg-[#05574F] hover:bg-[#076c62] text-white font-bold text-xs shadow-xs flex items-center justify-center gap-1.5 transition"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-[#FDBE3E]" />
+                        <span>Print Official Marksheet (रिपोर्ट कार्ड)</span>
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-center">
+                    <p className="text-xs text-slate-600 font-semibold mb-2">
+                      Weekly Class Test & Mid-Term marks will sync automatically as soon as teacher enters them.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setActiveServiceModal(null);
+                        onOpenReportCard(student, null);
+                      }}
+                      className="w-full py-2 rounded-xl bg-[#05574F] text-white font-bold text-xs shadow-xs flex items-center justify-center gap-1.5"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-[#FDBE3E]" />
+                      <span>Preview Provisional Report Card</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

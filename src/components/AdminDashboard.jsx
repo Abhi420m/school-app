@@ -30,6 +30,7 @@ export default function AdminDashboard({
   setActiveTab,
   setSelectedStudentForReport,
   setCurrentRole,
+  currentRole = 'school_admin',
   t
 }) {
   // Today's attendance calculation
@@ -58,54 +59,112 @@ export default function AdminDashboard({
       {/* Top Banner / Hero */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900 p-6 md:p-8 text-white shadow-lg">
         <div className="relative z-10 max-w-3xl">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-blue-200 text-xs font-semibold uppercase tracking-wider mb-3">
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            Academic Session {activeSchool?.session || '2026-2027'}
-          </span>
-          <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-2">
-            {activeSchool?.name || "School Administration & Monitoring System"}
-          </h2>
+          <div className="flex items-center gap-4 mb-3">
+            {activeSchool?.logoUrl ? (
+              <div className="w-16 h-16 rounded-2xl bg-white p-1 shadow-md shrink-0 border border-white/20">
+                <img src={activeSchool.logoUrl} alt="Logo" className="w-full h-full object-contain rounded-xl" />
+              </div>
+            ) : null}
+            <div>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-blue-200 text-xs font-semibold uppercase tracking-wider mb-1">
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                Academic Session {activeSchool?.session || '2026-2027'}
+              </span>
+              <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">
+                {activeSchool?.name || "School Administration & Monitoring System"}
+              </h2>
+            </div>
+          </div>
           <p className="text-blue-100 text-sm md:text-base leading-relaxed">
-            Real-time control center for {activeSchool?.name || "our institution"}. Manage all curriculum classes ({classes.length} grades), track daily student attendance, monitor teacher allocations, and provide parents with transparent academic updates.
+            Real-time control center for {activeSchool?.name || "our institution"}. Manage curriculum classes ({classes.length} grades), track daily student attendance, monitor teacher allocations, and maintain academic excellence.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <button
-              onClick={() => setActiveTab('attendance')}
-              className="px-4 py-2.5 rounded-xl bg-white text-blue-800 text-xs md:text-sm font-bold shadow-md hover:bg-blue-50 transition flex items-center gap-2"
-            >
-              <CalendarCheck2 className="w-4 h-4 text-blue-600" />
-              Mark Today's Attendance ({todayDate})
-            </button>
-            <button
-              onClick={() => {
-                setCurrentRole('parent');
-                setActiveTab('parent-view');
-              }}
-              className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-900 text-xs md:text-sm font-bold shadow-md transition flex items-center gap-2"
-            >
-              <Users className="w-4 h-4" />
-              Open Parent Portal View (अभिभावक पोर्टल)
-            </button>
-            {onOpenShareParentApp && (
-              <button
-                onClick={onOpenShareParentApp}
-                className="px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white text-xs md:text-sm font-black shadow-md transition flex items-center gap-2"
-                title="Share Parent App link, WhatsApp invite & QR code with parents"
-              >
-                <Share2 className="w-4 h-4 text-white" />
-                <span>अभिभावक ऐप शेयर करें (WhatsApp / QR)</span>
-              </button>
+            {/* Role: Teacher view buttons */}
+            {currentRole === 'teacher' && (
+              <>
+                <button
+                  onClick={() => setActiveTab('attendance')}
+                  className="px-4 py-2.5 rounded-xl bg-white text-blue-800 text-xs md:text-sm font-bold shadow-md hover:bg-blue-50 transition flex items-center gap-2"
+                >
+                  <CalendarCheck2 className="w-4 h-4 text-blue-600" />
+                  Mark Today's Attendance ({todayDate})
+                </button>
+                <button
+                  onClick={() => setActiveTab('exams')}
+                  className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs md:text-sm font-bold shadow-md transition flex items-center gap-2"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-purple-200" />
+                  Class Test & Exam Marks Entry
+                </button>
+                <button
+                  onClick={() => setActiveTab('classes')}
+                  className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs md:text-sm font-bold shadow-md transition flex items-center gap-2 border border-white/20"
+                >
+                  <GraduationCap className="w-4 h-4 text-amber-300" />
+                  My Assigned Classes
+                </button>
+              </>
             )}
-            {onOpenSettings && (
-              <button
-                onClick={onOpenSettings}
-                className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs md:text-sm font-bold shadow-md transition flex items-center gap-2 border border-white/20"
-                title="Edit School Name, Code, Board & Branding"
-              >
-                <Settings className="w-4 h-4 text-amber-300" />
-                <span>School Settings (सेटिंग्स)</span>
-              </button>
+
+            {/* Role: Accountant / Fee Counter view buttons */}
+            {currentRole === 'accountant' && (
+              <>
+                <button
+                  onClick={() => setActiveTab('students')}
+                  className="px-4 py-2.5 rounded-xl bg-[#FDBE3E] hover:bg-amber-400 text-slate-900 text-xs md:text-sm font-black shadow-md transition flex items-center gap-2"
+                >
+                  <Wallet className="w-4 h-4 text-slate-900" />
+                  Fee Collection & Slip Printing Desk
+                </button>
+                <button
+                  onClick={() => setActiveTab('notices')}
+                  className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs md:text-sm font-bold shadow-md transition flex items-center gap-2 border border-white/20"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-300" />
+                  Fee Circulars & Notices
+                </button>
+              </>
+            )}
+
+            {/* Role: School Admin / Principal view buttons (Parent view completely hidden) */}
+            {currentRole === 'school_admin' && (
+              <>
+                <button
+                  onClick={() => setActiveTab('attendance')}
+                  className="px-4 py-2.5 rounded-xl bg-white text-blue-800 text-xs md:text-sm font-bold shadow-md hover:bg-blue-50 transition flex items-center gap-2"
+                >
+                  <CalendarCheck2 className="w-4 h-4 text-blue-600" />
+                  Mark Today's Attendance ({todayDate})
+                </button>
+                <button
+                  onClick={() => setActiveTab('exams')}
+                  className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs md:text-sm font-bold shadow-md transition flex items-center gap-2"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-purple-200" />
+                  Exams & Test Results
+                </button>
+                {onOpenShareParentApp && (
+                  <button
+                    onClick={onOpenShareParentApp}
+                    className="px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white text-xs md:text-sm font-black shadow-md transition flex items-center gap-2"
+                    title="Share Parent App link, WhatsApp invite & QR code with parents"
+                  >
+                    <Share2 className="w-4 h-4 text-white" />
+                    <span>अभिभावक ऐप शेयर करें (WhatsApp / QR)</span>
+                  </button>
+                )}
+                {onOpenSettings && (
+                  <button
+                    onClick={onOpenSettings}
+                    className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs md:text-sm font-bold shadow-md transition flex items-center gap-2 border border-white/20"
+                    title="Edit School Name, Code, Board & Branding"
+                  >
+                    <Settings className="w-4 h-4 text-amber-300" />
+                    <span>School Settings & Logo (सेटिंग्स)</span>
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>

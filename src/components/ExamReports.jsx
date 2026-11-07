@@ -25,34 +25,38 @@ export default function ExamReports({
   exams,
   onSaveExamMarks,
   onOpenReportCard,
+  currentRole = 'school_admin',
   t
 }) {
-  const [selectedTerm, setSelectedTerm] = useState('Mid-Term Examination (अर्धवार्षिक परीक्षा)');
+  const [selectedTerm, setSelectedTerm] = useState('Weekly Class Test (साप्ताहिक क्लास टेस्ट)');
   const [selectedClass, setSelectedClass] = useState('All');
   const [searchStudent, setSearchStudent] = useState('');
   const [marksEntryStudent, setMarksEntryStudent] = useState(null);
 
+  const terms = [
+    'Weekly Class Test (साप्ताहिक क्लास टेस्ट)',
+    'Unit Test - 1 (यूनिट टेस्ट 1)',
+    'Unit Test - 2 (यूनिट टेस्ट 2)',
+    'Monthly Assessment Test (मासिक टेस्ट)',
+    'Mid-Term Examination (अर्धवार्षिक परीक्षा)',
+    'Pre-Board Examination (प्री-बोर्ड परीक्षा)',
+    'Final Annual Examination (वार्षिक परीक्षा)'
+  ];
+
   // Marks Entry Form State
   const [marksFormData, setMarksFormData] = useState({
-    term: 'Mid-Term Examination (अर्धवार्षिक परीक्षा)',
+    term: 'Weekly Class Test (साप्ताहिक क्लास टेस्ट)',
+    customTermName: '',
     session: '2026-2027',
     subjects: [
-      { name: "Mathematics", maxMarks: 100, marksObtained: 80 },
-      { name: "Science", maxMarks: 100, marksObtained: 85 },
-      { name: "English Language & Lit", maxMarks: 100, marksObtained: 78 },
-      { name: "Hindi Course-A", maxMarks: 100, marksObtained: 82 },
-      { name: "Social Science", maxMarks: 100, marksObtained: 75 }
+      { name: "Mathematics", maxMarks: 25, marksObtained: 22 },
+      { name: "Science", maxMarks: 25, marksObtained: 24 },
+      { name: "English Language & Lit", maxMarks: 25, marksObtained: 20 },
+      { name: "Hindi Course-A", maxMarks: 25, marksObtained: 23 },
+      { name: "Social Science", maxMarks: 25, marksObtained: 21 }
     ],
     teacherRemarks: "Good academic progress and regular participation in class."
   });
-
-  const terms = [
-    'Mid-Term Examination (अर्धवार्षिक परीक्षा)',
-    'Unit Test - 1',
-    'Unit Test - 2',
-    'Pre-Board Examination',
-    'Final Annual Examination (वार्षिक परीक्षा)'
-  ];
 
   // Filter students
   const filteredStudents = students.filter((s) => {
@@ -238,6 +242,14 @@ export default function ExamReports({
         </div>
       </div>
 
+      {/* Accountant / Read-only notice */}
+      {currentRole === 'accountant' && (
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-900 font-bold flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+          <span>सुरक्षा नियंत्रण (RBAC): आप 'फीस काउंटर' खाते से लॉगिन हैं। परीक्षा अंक व टेस्ट नंबर बदलने की अनुमति केवल शिक्षकों एवं प्रधानाचार्य को है। (Marks modification is restricted to Teachers and Admin).</span>
+        </div>
+      )}
+
       {/* Class Performance Summary Banner */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
@@ -348,15 +360,17 @@ export default function ExamReports({
 
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          {/* Enter / Edit Marks Button */}
-                          <button
-                            onClick={() => handleOpenMarksEntry(stu)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition border border-emerald-200"
-                            title="Enter / Edit Marks for this student"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                            <span>Enter Marks (नंबर दर्ज करें)</span>
-                          </button>
+                          {/* Enter / Edit Marks Button (Restricted to Teacher & Admin) */}
+                          {currentRole !== 'accountant' && (
+                            <button
+                              onClick={() => handleOpenMarksEntry(stu)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition border border-emerald-200"
+                              title="Enter / Edit Marks for this student"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                              <span>Enter Marks (नंबर दर्ज करें)</span>
+                            </button>
+                          )}
 
                           {/* View Official Report Card */}
                           <button
@@ -440,17 +454,61 @@ export default function ExamReports({
 
               {/* Subject Wise Marks Table */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-slate-800 font-black uppercase text-[11px] tracking-wide">
-                    Subject Wise Marks (विषयवार प्राप्तांक)
-                  </label>
+                <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <label className="block text-slate-800 font-black uppercase text-[11px] tracking-wide">
+                      Subject Wise Marks (विषयवार प्राप्तांक)
+                    </label>
+                    {/* Quick Test Presets */}
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMarksFormData(prev => ({
+                            ...prev,
+                            subjects: prev.subjects.map(s => ({ ...s, maxMarks: 25, marksObtained: Math.min(25, s.marksObtained) }))
+                          }));
+                        }}
+                        className="px-2 py-0.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[10px] border border-emerald-200 transition"
+                        title="Set Max Marks to 25 for Class Weekly Test"
+                      >
+                        ⚡ 25 Marks (Weekly)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMarksFormData(prev => ({
+                            ...prev,
+                            subjects: prev.subjects.map(s => ({ ...s, maxMarks: 50, marksObtained: Math.min(50, s.marksObtained) }))
+                          }));
+                        }}
+                        className="px-2 py-0.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold text-[10px] border border-blue-200 transition"
+                        title="Set Max Marks to 50 for Unit Test"
+                      >
+                        ⚡ 50 Marks (Unit Test)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMarksFormData(prev => ({
+                            ...prev,
+                            subjects: prev.subjects.map(s => ({ ...s, maxMarks: 100, marksObtained: Math.min(100, s.marksObtained) }))
+                          }));
+                        }}
+                        className="px-2 py-0.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-800 font-bold text-[10px] border border-purple-200 transition"
+                        title="Set Max Marks to 100 for Final Board / Term Exam"
+                      >
+                        ⚡ 100 Marks (Board/Term)
+                      </button>
+                    </div>
+                  </div>
                   <button
                     type="button"
                     onClick={handleAddSubject}
                     className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>+ Add Another Subject</span>
+                    <span>+ Add Subject</span>
                   </button>
                 </div>
 

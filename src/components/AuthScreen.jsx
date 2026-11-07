@@ -73,10 +73,25 @@ export default function AuthScreen({
     city: '',
     state: 'Delhi',
     address: '',
-    theme: 'blue',
+    theme: 'emerald',
+    logoUrl: '',
     adminPassword: '',
     confirmPassword: ''
   });
+
+  const handleRegisterLogoUpload = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert("Please select a valid image file (PNG/JPG).");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setRegisterData((prev) => ({ ...prev, logoUrl: ev.target.result }));
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleLoginSubmit = (e) => {
     e.preventDefault();
@@ -144,6 +159,7 @@ export default function AuthScreen({
       city: registerData.city,
       state: registerData.state,
       theme: registerData.theme,
+      logoUrl: registerData.logoUrl || null,
       affiliation: `${registerData.board} Recognized | Code: ${registerData.code}`
     };
 
@@ -382,28 +398,37 @@ export default function AuthScreen({
                   <button
                     type="button"
                     onClick={() => handleQuickDemoLogin('xavier@school.com', '123')}
-                    className="p-2 rounded-xl border border-blue-200 bg-blue-50/60 hover:bg-blue-100 text-left transition"
+                    className="p-2.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-left transition"
                   >
-                    <p className="font-extrabold text-blue-900 text-xs">St. Xavier's</p>
-                    <p className="text-[10px] text-blue-700">xavier@school.com</p>
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className="w-2 h-2 rounded-full bg-blue-600"></span>
+                      <p className="font-extrabold text-blue-900 text-xs">👑 Principal / Admin</p>
+                    </div>
+                    <p className="text-[10px] text-blue-700">xavier@school.com (Full Access)</p>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => handleQuickDemoLogin('dps@school.com', '123')}
-                    className="p-2 rounded-xl border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100 text-left transition"
+                    onClick={() => handleQuickDemoLogin('rajesh@school.com', '123')}
+                    className="p-2.5 rounded-xl border border-purple-200 bg-purple-50/70 hover:bg-purple-100 text-left transition"
                   >
-                    <p className="font-extrabold text-emerald-900 text-xs">DPS Model</p>
-                    <p className="text-[10px] text-emerald-700">dps@school.com</p>
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className="w-2 h-2 rounded-full bg-purple-600"></span>
+                      <p className="font-extrabold text-purple-900 text-xs">👩‍🏫 Teacher (शिक्षक)</p>
+                    </div>
+                    <p className="text-[10px] text-purple-700">rajesh@school.com (Marks & Att.)</p>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => handleQuickDemoLogin('svm@school.com', '123')}
-                    className="p-2 rounded-xl border border-amber-200 bg-amber-50/60 hover:bg-amber-100 text-left transition"
+                    onClick={() => handleQuickDemoLogin('accountant@school.com', '123')}
+                    className="p-2.5 rounded-xl border border-amber-200 bg-amber-50/70 hover:bg-amber-100 text-left transition"
                   >
-                    <p className="font-extrabold text-amber-900 text-xs">Saraswati VM</p>
-                    <p className="text-[10px] text-amber-700">svm@school.com</p>
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className="w-2 h-2 rounded-full bg-amber-600"></span>
+                      <p className="font-extrabold text-amber-900 text-xs">💰 Fee Counter (लेखाकार)</p>
+                    </div>
+                    <p className="text-[10px] text-amber-700">accountant@school.com (Receipts)</p>
                   </button>
                 </div>
               </div>
@@ -528,6 +553,28 @@ export default function AuthScreen({
               </div>
 
               <form onSubmit={handleRegisterSubmit} className="space-y-3 text-xs max-h-[60vh] overflow-y-auto pr-1">
+                {/* School Logo / Photo Upload */}
+                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-white border border-slate-300 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+                    {registerData.logoUrl ? (
+                      <img src={registerData.logoUrl} alt="Logo Preview" className="w-full h-full object-contain p-0.5" />
+                    ) : (
+                      <School className="w-6 h-6 text-slate-400" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-slate-700 font-bold mb-1">
+                      School Logo / Photo (स्कूल लोगो अपलोड करें)
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleRegisterLogoUpload}
+                      className="text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:font-bold file:bg-[#05574F] file:text-white hover:file:bg-[#076c62] cursor-pointer"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-slate-700 font-bold mb-1">{t.schoolName} *</label>
                   <input

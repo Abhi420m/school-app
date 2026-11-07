@@ -92,9 +92,15 @@ export default function ReportCardModal({
 
           {/* School Header */}
           <div className="text-center border-b-2 border-slate-800 pb-4">
-            <div className="w-14 h-14 mx-auto rounded-2xl bg-blue-900 text-white flex items-center justify-center shadow-md mb-2">
-              <School className="w-8 h-8" />
-            </div>
+            {activeSchool?.logoUrl ? (
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-white border border-slate-300 p-1 flex items-center justify-center shadow-md mb-2 overflow-hidden">
+                <img src={activeSchool.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+              </div>
+            ) : (
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-blue-900 text-white flex items-center justify-center shadow-md mb-2">
+                <School className="w-8 h-8" />
+              </div>
+            )}
             <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900">
               {schoolName}
             </h1>

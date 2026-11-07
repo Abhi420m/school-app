@@ -65,9 +65,15 @@ export default function FeeReceiptModal({
           {/* Header */}
           <div className="text-center border-b-2 border-slate-800 pb-4">
             <div className="flex items-center justify-center gap-3 mb-1">
-              <div className="w-10 h-10 rounded-xl bg-[#05574F] text-[#FDBE3E] flex items-center justify-center font-bold">
-                <School className="w-6 h-6" />
-              </div>
+              {activeSchool?.logoUrl ? (
+                <div className="w-12 h-12 rounded-xl bg-white p-0.5 border border-slate-300 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+                  <img src={activeSchool.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                </div>
+              ) : (
+                <div className="w-10 h-10 rounded-xl bg-[#05574F] text-[#FDBE3E] flex items-center justify-center font-bold">
+                  <School className="w-6 h-6" />
+                </div>
+              )}
               <h1 className="text-xl sm:text-2xl font-black uppercase text-slate-900 tracking-tight">
                 {activeSchool?.name || "St. Xavier's Academy"}
               </h1>

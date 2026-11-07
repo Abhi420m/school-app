@@ -38,6 +38,7 @@ export default function StudentDirectory({
   setClassFilter,
   searchTerm,
   setSearchTerm,
+  currentRole = 'school_admin',
   t
 }) {
   const [sectionFilter, setSectionFilter] = useState('All');
@@ -49,6 +50,18 @@ export default function StudentDirectory({
   const [feeCollectStudent, setFeeCollectStudent] = useState(null);
   const [receiptStudent, setReceiptStudent] = useState(null);
   const [receiptDetails, setReceiptDetails] = useState(null);
+
+  // Quick Direct Receipt Handler for already paid fees
+  const handleOpenDirectReceipt = (student) => {
+    setReceiptStudent(student);
+    setReceiptDetails({
+      amount: student.feePaid || 30000,
+      mode: 'Cash / Bank Transfer',
+      receiptNo: `REC-2026-${student.rollNo || '001'}`,
+      date: new Date().toISOString().split('T')[0],
+      remark: 'Academic Tuition Fee Installment'
+    });
+  };
 
   // Fee Payment State
   const [feePaymentData, setFeePaymentData] = useState({
@@ -255,6 +268,30 @@ export default function StudentDirectory({
 
   return (
     <div className="space-y-6">
+      {/* Accountant / Fee Desk Banner (RBAC) */}
+      {currentRole === 'accountant' && (
+        <div className="bg-gradient-to-r from-amber-600 via-yellow-600 to-amber-700 p-5 rounded-2xl text-white shadow-md flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center font-bold">
+              <Wallet className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="font-extrabold text-lg leading-tight">
+                School Fee Collection & Slip Counter (शुल्क संग्रहण काउंटर)
+              </h3>
+              <p className="text-xs text-amber-100 mt-0.5">
+                Authorized Fee Counter Session: Collect school tuition installments, generate computerized fee slips, and print instant receipts.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1 rounded-full bg-white/20 text-xs font-bold">
+              🔒 RBAC: Fee Section Authorized
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Header and Controls */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -480,13 +517,28 @@ export default function StudentDirectory({
 
                               <td className="py-2.5 px-4 text-right">
                                 <div className="flex items-center justify-end gap-1">
-                                  <button
-                                    onClick={() => handleOpenFeeCollect(stu)}
-                                    className="p-1 rounded text-emerald-600 hover:bg-emerald-50"
-                                    title="Collect Fee / फीस जमा करें"
-                                  >
-                                    <Wallet className="w-3.5 h-3.5" />
-                                  </button>
+                                  {/* Collect Fee (Accountant & Admin only) */}
+                                  {currentRole !== 'teacher' && (
+                                    <button
+                                      onClick={() => handleOpenFeeCollect(stu)}
+                                      className="p-1 rounded text-emerald-600 hover:bg-emerald-50"
+                                      title="Collect Fee / फीस जमा करें"
+                                    >
+                                      <Wallet className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+
+                                  {/* Direct Print Fee Slip (Accountant & Admin only, when fee is paid) */}
+                                  {currentRole !== 'teacher' && Number(stu.feePaid) > 0 && (
+                                    <button
+                                      onClick={() => handleOpenDirectReceipt(stu)}
+                                      className="p-1 rounded text-amber-600 hover:bg-amber-50"
+                                      title="Print Fee Receipt (रसीद प्रिंट करें)"
+                                    >
+                                      <Printer className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+
                                   <button
                                     onClick={() => setSelectedStudentDetail(stu)}
                                     className="p-1 rounded text-slate-400 hover:text-slate-800 hover:bg-slate-100"
@@ -501,20 +553,26 @@ export default function StudentDirectory({
                                   >
                                     <Pencil className="w-3.5 h-3.5" />
                                   </button>
-                                  <button
-                                    onClick={() => handleDelete(stu)}
-                                    className="p-1 rounded text-red-500 hover:bg-red-50"
-                                    title="Delete Student"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    onClick={() => onViewStudentReport(stu)}
-                                    className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold text-[10px]"
-                                    title="Report Card"
-                                  >
-                                    Report
-                                  </button>
+                                  {/* Delete Student (School Admin Only) */}
+                                  {currentRole === 'school_admin' && (
+                                    <button
+                                      onClick={() => handleDelete(stu)}
+                                      className="p-1 rounded text-red-500 hover:bg-red-50"
+                                      title="Delete Student"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                  {/* Report Card (Teacher & Admin only) */}
+                                  {currentRole !== 'accountant' && (
+                                    <button
+                                      onClick={() => onViewStudentReport(stu)}
+                                      className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold text-[10px]"
+                                      title="Report Card"
+                                    >
+                                      Report
+                                    </button>
+                                  )}
                                   <a
                                     href={`https://api.whatsapp.com/send?phone=91${(stu.phone || '').replace(/\D/g, '').slice(-10)}&text=${encodeURIComponent(
                                       `🏫 *स्कूल मोबाइल ऐप लॉगिन (VidyaSetu Parent App)*\nप्रिय अभिभावक, छात्र *${stu.name}* (${stu.className}-${stu.section}) का रिपोर्ट कार्ड, फीस व हाजिरी देखने हेतु ऐप लिंक:\nhttps://abhi420m.github.io/school-app/?portal=parent\n\nरजिस्टर्ड मोबाइल: ${stu.phone}\nAdmission No: ${stu.admissionNo}\nसुरक्षा पिन: 123`
@@ -646,14 +704,27 @@ export default function StudentDirectory({
 
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-1">
-                            {/* Collect Fee */}
-                            <button
-                              onClick={() => handleOpenFeeCollect(stu)}
-                              className="p-1.5 rounded-lg text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 transition"
-                              title="Collect Fee / फीस जमा करें"
-                            >
-                              <Wallet className="w-4 h-4" />
-                            </button>
+                            {/* Collect Fee (Accountant & Admin only) */}
+                            {currentRole !== 'teacher' && (
+                              <button
+                                onClick={() => handleOpenFeeCollect(stu)}
+                                className="p-1.5 rounded-lg text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 transition"
+                                title="Collect Fee / फीस जमा करें"
+                              >
+                                <Wallet className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {/* Direct Print Fee Slip (Accountant & Admin only, if fee paid) */}
+                            {currentRole !== 'teacher' && Number(stu.feePaid) > 0 && (
+                              <button
+                                onClick={() => handleOpenDirectReceipt(stu)}
+                                className="p-1.5 rounded-lg text-amber-600 hover:text-amber-800 hover:bg-amber-50 transition"
+                                title="Print Fee Slip (रसीद प्रिंट करें)"
+                              >
+                                <Printer className="w-4 h-4" />
+                              </button>
+                            )}
 
                             {/* View Profile */}
                             <button
@@ -673,24 +744,28 @@ export default function StudentDirectory({
                               <Pencil className="w-4 h-4" />
                             </button>
 
-                            {/* Delete Student */}
-                            <button
-                              onClick={() => handleDelete(stu)}
-                              className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition"
-                              title="Delete Student / छात्र हटाएं"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            {/* Delete Student (School Admin Only) */}
+                            {currentRole === 'school_admin' && (
+                              <button
+                                onClick={() => handleDelete(stu)}
+                                className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition"
+                                title="Delete Student / छात्र हटाएं"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
 
-                            {/* Report Card */}
-                            <button
-                              onClick={() => onViewStudentReport(stu)}
-                              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-[11px] transition"
-                              title="View Marks & Report Card"
-                            >
-                              <FileText className="w-3.5 h-3.5" />
-                              <span>Report</span>
-                            </button>
+                            {/* Report Card (Teacher & Admin only) */}
+                            {currentRole !== 'accountant' && (
+                              <button
+                                onClick={() => onViewStudentReport(stu)}
+                                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-[11px] transition"
+                                title="View Marks & Report Card"
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                                <span>Report</span>
+                              </button>
+                            )}
 
                             {/* Send WhatsApp Login Pass to Parent */}
                             <a

@@ -78,7 +78,16 @@ export default function App() {
         ...prev,
         currentSession: authResult.session
       }));
-      setActiveTab(authResult.session.role === 'parent' ? 'parent-view' : 'dashboard');
+      const userRole = authResult.session.role;
+      if (userRole === 'parent') {
+        setActiveTab('parent-view');
+      } else if (userRole === 'teacher') {
+        setActiveTab('attendance');
+      } else if (userRole === 'accountant') {
+        setActiveTab('students');
+      } else {
+        setActiveTab('dashboard');
+      }
       showToast(`Welcome, ${authResult.session.userName}! Signed in to ${authResult.userSchool.name}`);
       return { success: true };
     }
@@ -349,6 +358,29 @@ export default function App() {
     showToast("School notice circular published!");
   };
 
+  // Update Notice in Active School
+  const handleUpdateNotice = (updatedNotice) => {
+    updateCurrentSchoolData((schoolData) => ({
+      ...schoolData,
+      notices: (schoolData.notices || []).map((n) =>
+        n.id === updatedNotice.id ? updatedNotice : n
+      )
+    }));
+    showToast(`Notice "${updatedNotice.title}" updated successfully!`);
+  };
+
+  // Delete Notice from Active School
+  const handleDeleteNotice = (noticeId) => {
+    const noticeToDelete = (currentSchoolData.notices || []).find((n) => n.id === noticeId);
+    if (!noticeToDelete) return;
+
+    updateCurrentSchoolData((schoolData) => ({
+      ...schoolData,
+      notices: (schoolData.notices || []).filter((n) => n.id !== noticeId)
+    }));
+    showToast(`Notice "${noticeToDelete.title}" removed.`);
+  };
+
   // Open Report Card Modal
   const handleOpenReportCard = (student, exam = null) => {
     setSelectedStudentForReport(student);
@@ -365,7 +397,12 @@ export default function App() {
   };
 
   const isParent = currentSession?.role === 'parent';
-  const effectiveTab = isParent ? 'parent-view' : activeTab;
+  // Strictly isolate Parent View: School Portal never shows parent view; parents never show school portal
+  const effectiveTab = isParent
+    ? 'parent-view'
+    : (activeTab === 'parent-view'
+        ? (currentSession?.role === 'teacher' ? 'attendance' : currentSession?.role === 'accountant' ? 'students' : 'dashboard')
+        : activeTab);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800">
@@ -383,7 +420,7 @@ export default function App() {
         onUpdateSchool={handleUpdateSchool}
         currentSession={currentSession}
         onLogout={handleLogout}
-        currentRole={currentSession.role === 'school_admin' ? 'admin' : currentSession.role}
+        currentRole={currentSession?.role}
         activeTab={effectiveTab}
         setActiveTab={setActiveTab}
         lang={lang}
@@ -410,6 +447,7 @@ export default function App() {
             setActiveTab={setActiveTab}
             setSelectedStudentForReport={handleOpenReportCard}
             setCurrentRole={() => {}}
+            currentRole={currentSession?.role}
             t={t}
           />
         )}
@@ -444,6 +482,7 @@ export default function App() {
             setClassFilter={setClassFilter}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
+            currentRole={currentSession?.role}
             t={t}
           />
         )}
@@ -481,6 +520,7 @@ export default function App() {
             exams={currentSchoolData.exams || {}}
             onSaveExamMarks={handleSaveExamMarks}
             onOpenReportCard={handleOpenReportCard}
+            currentRole={currentSession?.role}
             t={t}
           />
         )}
@@ -490,6 +530,8 @@ export default function App() {
           <NoticeBoard
             notices={currentSchoolData.notices || []}
             onAddNotice={handleAddNotice}
+            onUpdateNotice={handleUpdateNotice}
+            onDeleteNotice={handleDeleteNotice}
             t={t}
           />
         )}

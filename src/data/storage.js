@@ -226,10 +226,18 @@ export function sanitizeInput(input) {
 export function loadMultiSchoolData() {
   try {
     const schools = JSON.parse(localStorage.getItem(STORAGE_KEYS.SCHOOLS)) || initialSchools;
-    const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS)) || initialUsers;
+    let users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS)) || initialUsers;
     const rawSession = JSON.parse(localStorage.getItem(STORAGE_KEYS.CURRENT_SESSION)) || null;
     const allData = JSON.parse(localStorage.getItem(STORAGE_KEYS.MULTISCHOOL_DATA)) || initialMultiSchoolData;
     const lang = localStorage.getItem(STORAGE_KEYS.LANGUAGE) || 'en';
+
+    // Ensure all default users (like accountant & teacher) exist
+    const userIds = new Set(users.map(u => u.id));
+    initialUsers.forEach(iu => {
+      if (!userIds.has(iu.id)) {
+        users.push(iu);
+      }
+    });
 
     // Verify Session Integrity (Anti-Tamper check)
     let currentSession = null;
@@ -433,6 +441,7 @@ export function registerSchoolWithAdminAccount(schoolDetails, adminCredentials, 
     ...schoolDetails,
     id: schoolId,
     status: 'Active',
+    logoUrl: schoolDetails.logoUrl || null,
     established: schoolDetails.established || new Date().getFullYear().toString(),
     badgeColor: schoolDetails.theme === 'emerald'
       ? 'from-emerald-700 to-teal-600'
@@ -446,15 +455,35 @@ export function registerSchoolWithAdminAccount(schoolDetails, adminCredentials, 
   const newAdminUser = {
     id: userId,
     schoolId: schoolId,
-    name: `${schoolDetails.principal} (Admin)`,
+    name: `${schoolDetails.principal} (Principal / Admin)`,
     email: adminCredentials.email.trim().toLowerCase(),
     username: adminCredentials.username ? adminCredentials.username.trim().toLowerCase() : adminCredentials.email.split('@')[0],
     password: adminCredentials.password.trim(),
     role: 'school_admin'
   };
 
+  const defaultTeacherUser = {
+    id: `USR-T-${schoolId}`,
+    schoolId: schoolId,
+    name: 'Class Teacher (Faculty)',
+    email: `teacher.${schoolId.toLowerCase()}@school.com`,
+    username: `teacher_${schoolId.toLowerCase()}`,
+    password: '123',
+    role: 'teacher'
+  };
+
+  const defaultAccountantUser = {
+    id: `USR-ACC-${schoolId}`,
+    schoolId: schoolId,
+    name: 'Accounts & Fee Desk',
+    email: `fees.${schoolId.toLowerCase()}@school.com`,
+    username: `fees_${schoolId.toLowerCase()}`,
+    password: '123',
+    role: 'accountant'
+  };
+
   const updatedSchools = [...existingSchools, newSchool];
-  const updatedUsers = [...existingUsers, newAdminUser];
+  const updatedUsers = [...existingUsers, newAdminUser, defaultTeacherUser, defaultAccountantUser];
   const updatedData = {
     ...existingData,
     [schoolId]: {

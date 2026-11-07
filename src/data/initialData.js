@@ -90,11 +90,23 @@ export const initialUsers = [
   {
     id: "USR-T10",
     schoolId: "SCH-1",
-    name: "Dr. Rajesh Sharma (Faculty)",
+    name: "Dr. Rajesh Sharma (Faculty / Teacher)",
     email: "rajesh@school.com",
+    username: "rajesh_teacher",
     phone: "9876543210",
     password: "123",
     role: "teacher"
+  },
+  // Fee Counter / Accountant in School 1
+  {
+    id: "USR-ACC-1",
+    schoolId: "SCH-1",
+    name: "Suresh Gupta (Fee Counter / Accountant)",
+    email: "accountant@school.com",
+    username: "accountant",
+    phone: "9812345678",
+    password: "123",
+    role: "accountant"
   },
   // Parent of Aarav (School 1)
   {
