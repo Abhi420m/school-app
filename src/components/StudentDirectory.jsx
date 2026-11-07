@@ -17,7 +17,8 @@ import {
   Trash2,
   Layers,
   Table as TableIcon,
-  Printer
+  Printer,
+  Wallet
 } from 'lucide-react';
 
 export default function StudentDirectory({
@@ -39,6 +40,61 @@ export default function StudentDirectory({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
   const [selectedStudentDetail, setSelectedStudentDetail] = useState(null);
+  const [feeCollectStudent, setFeeCollectStudent] = useState(null);
+
+  // Fee Payment State
+  const [feePaymentData, setFeePaymentData] = useState({
+    amount: '',
+    mode: 'Cash',
+    receiptNo: '',
+    date: new Date().toISOString().split('T')[0],
+    remark: 'School Tuition Fee Installment'
+  });
+
+  const handleOpenFeeCollect = (student) => {
+    setFeeCollectStudent(student);
+    const totalFee = Number(student.feeAmount) || 36000;
+    const paid = Number(student.feePaid) || 0;
+    const balance = Math.max(0, totalFee - paid);
+
+    setFeePaymentData({
+      amount: balance > 0 ? balance : 5000,
+      mode: 'Cash',
+      receiptNo: `REC-${Date.now().toString().slice(-5)}`,
+      date: new Date().toISOString().split('T')[0],
+      remark: balance > 0 ? 'Due Fee Clearance' : 'Advance Fee Deposit'
+    });
+  };
+
+  const handleFeePaymentSubmit = (e) => {
+    e.preventDefault();
+    if (!feeCollectStudent) return;
+    const payAmt = Number(feePaymentData.amount) || 0;
+    if (payAmt <= 0) {
+      alert("कृपया मान्य फीस राशि दर्ज करें (Enter a valid amount).");
+      return;
+    }
+
+    const currentPaid = Number(feeCollectStudent.feePaid) || 0;
+    const totalFee = Number(feeCollectStudent.feeAmount) || 36000;
+    const newFeePaid = currentPaid + payAmt;
+    const newStatus = newFeePaid >= totalFee ? 'Paid' : 'Partial';
+
+    const updated = {
+      ...feeCollectStudent,
+      feePaid: newFeePaid,
+      feeStatus: newStatus
+    };
+
+    if (onUpdateStudent) {
+      onUpdateStudent(updated);
+    }
+    if (selectedStudentDetail?.id === updated.id) {
+      setSelectedStudentDetail(updated);
+    }
+    alert(`✅ रसीद (Receipt) No: ${feePaymentData.receiptNo}\nराशि: ₹${payAmt.toLocaleString()}\nमाध्यम: ${feePaymentData.mode}\nछात्र: ${feeCollectStudent.name}\n\nफीस सफलता से जमा हो गई है!`);
+    setFeeCollectStudent(null);
+  };
 
   // New Student Form State
   const [formData, setFormData] = useState({
@@ -362,17 +418,31 @@ export default function StudentDirectory({
                               </td>
 
                               <td className="py-2.5 px-4">
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                  stu.feeStatus === 'Paid'
-                                    ? 'bg-emerald-50 text-emerald-700'
-                                    : 'bg-amber-50 text-amber-700'
-                                }`}>
-                                  {stu.feeStatus}
-                                </span>
+                                <button
+                                  onClick={() => handleOpenFeeCollect(stu)}
+                                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 transition hover:opacity-85 ${
+                                    stu.feeStatus === 'Paid'
+                                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                      : stu.feeStatus === 'Partial'
+                                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                      : 'bg-red-50 text-red-700 border border-red-200'
+                                  }`}
+                                  title="Click to Collect Fee (फीस जमा करें)"
+                                >
+                                  <Wallet className="w-3 h-3" />
+                                  <span>{stu.feeStatus}</span>
+                                </button>
                               </td>
 
                               <td className="py-2.5 px-4 text-right">
                                 <div className="flex items-center justify-end gap-1">
+                                  <button
+                                    onClick={() => handleOpenFeeCollect(stu)}
+                                    className="p-1 rounded text-emerald-600 hover:bg-emerald-50"
+                                    title="Collect Fee / फीस जमा करें"
+                                  >
+                                    <Wallet className="w-3.5 h-3.5" />
+                                  </button>
                                   <button
                                     onClick={() => setSelectedStudentDetail(stu)}
                                     className="p-1 rounded text-slate-400 hover:text-slate-800 hover:bg-slate-100"
@@ -502,19 +572,33 @@ export default function StudentDirectory({
                         </td>
 
                         <td className="py-3 px-4">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            stu.feeStatus === 'Paid'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              : stu.feeStatus === 'Partial'
-                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                              : 'bg-red-50 text-red-700 border border-red-200'
-                          }`}>
-                            {stu.feeStatus}
-                          </span>
+                          <button
+                            onClick={() => handleOpenFeeCollect(stu)}
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 transition hover:opacity-85 ${
+                              stu.feeStatus === 'Paid'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : stu.feeStatus === 'Partial'
+                                ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                : 'bg-red-50 text-red-700 border border-red-200'
+                            }`}
+                            title="Click to Collect Fee (फीस जमा करें)"
+                          >
+                            <Wallet className="w-3 h-3" />
+                            <span>{stu.feeStatus}</span>
+                          </button>
                         </td>
 
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-1">
+                            {/* Collect Fee */}
+                            <button
+                              onClick={() => handleOpenFeeCollect(stu)}
+                              className="p-1.5 rounded-lg text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 transition"
+                              title="Collect Fee / फीस जमा करें"
+                            >
+                              <Wallet className="w-4 h-4" />
+                            </button>
+
                             {/* View Profile */}
                             <button
                               onClick={() => setSelectedStudentDetail(stu)}
@@ -961,6 +1045,27 @@ export default function StudentDirectory({
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Annual Fee Amount (₹ कुल वार्षिक फीस)</label>
+                  <input
+                    type="number"
+                    value={formData.feeAmount}
+                    onChange={(e) => setFormData({ ...formData, feeAmount: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Initial Fee Paid (₹ अब तक जमा फीस)</label>
+                  <input
+                    type="number"
+                    value={formData.feePaid}
+                    onChange={(e) => setFormData({ ...formData, feePaid: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-slate-600 font-semibold mb-1">{t.address}</label>
                 <textarea
@@ -985,6 +1090,123 @@ export default function StudentDirectory({
                   className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-sm"
                 >
                   Save & Register Student
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* QUICK FEE COLLECTION MODAL (फीस जमा मोडल) */}
+      {feeCollectStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/75 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative border border-slate-100">
+            <button
+              onClick={() => setFeeCollectStudent(null)}
+              className="absolute right-4 top-4 p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 pb-4 border-b border-slate-100 mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md">
+                <Wallet className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-slate-900 text-base sm:text-lg">
+                  Collect Student Fee (फीस जमा करें)
+                </h3>
+                <p className="text-xs text-slate-500 font-medium">
+                  Student: <strong className="text-slate-800">{feeCollectStudent.name}</strong> • {feeCollectStudent.className} ({feeCollectStudent.section})
+                </p>
+              </div>
+            </div>
+
+            {/* Dues Overview Card */}
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 mb-4 grid grid-cols-3 gap-2 text-center text-xs">
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold uppercase block">Total Fee</span>
+                <span className="font-black text-slate-900">₹{(feeCollectStudent.feeAmount || 36000).toLocaleString()}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold uppercase block">Already Paid</span>
+                <span className="font-black text-emerald-600">₹{(feeCollectStudent.feePaid || 0).toLocaleString()}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold uppercase block">Due Balance</span>
+                <span className="font-black text-red-600">
+                  ₹{Math.max(0, (feeCollectStudent.feeAmount || 36000) - (feeCollectStudent.feePaid || 0)).toLocaleString()}
+                </span>
+              </div>
+            </div>
+
+            <form onSubmit={handleFeePaymentSubmit} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Payment Amount (₹ जमा राशि) *</label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-2.5 text-slate-400 font-black text-sm">₹</span>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={feePaymentData.amount}
+                    onChange={(e) => setFeePaymentData({ ...feePaymentData, amount: e.target.value })}
+                    className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-emerald-300 focus:border-emerald-600 outline-none font-black text-emerald-900 text-base"
+                    placeholder="Enter amount"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">Payment Mode (माध्यम) *</label>
+                  <select
+                    value={feePaymentData.mode}
+                    onChange={(e) => setFeePaymentData({ ...feePaymentData, mode: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-600 outline-none bg-white font-medium"
+                  >
+                    <option value="Cash">Cash (नकद)</option>
+                    <option value="UPI / QR">UPI (GPay / PhonePe / Paytm)</option>
+                    <option value="Bank Transfer">Bank Transfer / NEFT</option>
+                    <option value="Cheque">Cheque</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">Receipt No (रसीद संख्या)</label>
+                  <input
+                    type="text"
+                    readOnly
+                    value={feePaymentData.receiptNo}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-100 font-mono text-slate-700 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Remarks / Note</label>
+                <input
+                  type="text"
+                  value={feePaymentData.remark}
+                  onChange={(e) => setFeePaymentData({ ...feePaymentData, remark: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-600 outline-none"
+                  placeholder="e.g. Term 2 Fee paid in full"
+                />
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setFeeCollectStudent(null)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold shadow-sm flex items-center gap-1.5"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Submit & Generate Receipt (जमा करें)</span>
                 </button>
               </div>
             </form>

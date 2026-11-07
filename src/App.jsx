@@ -267,6 +267,30 @@ export default function App() {
     }));
   };
 
+  // Save Exam Marks for Student (अंक / नंबर सुरक्षित करें)
+  const handleSaveExamMarks = (studentId, newExam) => {
+    updateCurrentSchoolData((schoolData) => {
+      const currentExams = schoolData.exams || {};
+      const studentExams = currentExams[studentId] || [];
+      const existingIndex = studentExams.findIndex((e) => e.term === newExam.term);
+      let updatedStudentExams;
+      if (existingIndex >= 0) {
+        updatedStudentExams = [...studentExams];
+        updatedStudentExams[existingIndex] = newExam;
+      } else {
+        updatedStudentExams = [newExam, ...studentExams];
+      }
+      return {
+        ...schoolData,
+        exams: {
+          ...currentExams,
+          [studentId]: updatedStudentExams
+        }
+      };
+    });
+    showToast(`Exam marks saved for ${newExam.term}!`);
+  };
+
   // Add Notice to Active School
   const handleAddNotice = (newNotice) => {
     updateCurrentSchoolData((schoolData) => ({
@@ -399,6 +423,7 @@ export default function App() {
             students={currentSchoolData.students || []}
             classes={currentSchoolData.classes || []}
             exams={currentSchoolData.exams || {}}
+            onSaveExamMarks={handleSaveExamMarks}
             onOpenReportCard={handleOpenReportCard}
             t={t}
           />
