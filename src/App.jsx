@@ -321,6 +321,7 @@ export default function App() {
         {activeTab === 'teachers' && (
           <TeacherDirectory
             teachers={currentSchoolData.teachers || []}
+            classes={currentSchoolData.classes || []}
             onAddTeacher={handleAddTeacher}
             onUpdateTeacher={handleUpdateTeacher}
             onDeleteTeacher={handleDeleteTeacher}
