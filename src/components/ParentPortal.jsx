@@ -27,7 +27,11 @@ import {
   FileText,
   DollarSign,
   Smartphone,
-  Download
+  Download,
+  User,
+  Pencil,
+  Save,
+  ShieldCheck
 } from 'lucide-react';
 import { getStudentAttendanceSummary } from '../data/storage';
 
@@ -42,6 +46,7 @@ export default function ParentPortal({
   notices,
   todayDate,
   onOpenReportCard,
+  onUpdateStudent,
   t
 }) {
   // Sibling list support & student matching for logged in parent (Section 2.3)
@@ -56,8 +61,57 @@ export default function ParentPortal({
   const [isSwitchModalOpen, setIsSwitchModalOpen] = useState(false);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [activeServiceModal, setActiveServiceModal] = useState(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const student = parentChildren[selectedChildIndex] || parentChildren[0] || students[0];
+
+  // Student Profile Edit State (so students/parents can give/update their own details)
+  const [profileEditData, setProfileEditData] = useState({
+    phone: student?.phone || '',
+    address: student?.address || '',
+    bloodGroup: student?.bloodGroup || 'B+',
+    email: student?.email || '',
+    emergencyContact: student?.emergencyContact || student?.phone || '',
+    fatherName: student?.fatherName || '',
+    motherName: student?.motherName || ''
+  });
+
+  const handleOpenProfileModal = () => {
+    if (student) {
+      setProfileEditData({
+        phone: student.phone || '',
+        address: student.address || '',
+        bloodGroup: student.bloodGroup || 'B+',
+        email: student.email || '',
+        emergencyContact: student.emergencyContact || student.phone || '',
+        fatherName: student.fatherName || '',
+        motherName: student.motherName || ''
+      });
+    }
+    setIsProfileModalOpen(true);
+  };
+
+  const handleSaveProfileSubmit = (e) => {
+    e.preventDefault();
+    if (!student) return;
+
+    const updated = {
+      ...student,
+      phone: profileEditData.phone,
+      address: profileEditData.address,
+      bloodGroup: profileEditData.bloodGroup,
+      email: profileEditData.email,
+      emergencyContact: profileEditData.emergencyContact,
+      fatherName: profileEditData.fatherName,
+      motherName: profileEditData.motherName
+    };
+
+    if (onUpdateStudent) {
+      onUpdateStudent(updated);
+    }
+    alert("✅ आपकी व्यक्तिगत जानकारी स्कूल रिकॉर्ड में सफलतापूर्वक दर्ज कर दी गई है!\n(Your details have been submitted and updated in school records successfully!)");
+    setIsProfileModalOpen(false);
+  };
 
   // Class teacher for this child
   const classTeacher = teachers.find(
@@ -174,6 +228,35 @@ export default function ParentPortal({
           </span>
         </div>
 
+        {/* Student Profile & Contact Card (अपनी जानकारी देखें व अपडेट करें) */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
+              <User className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <h4 className="font-extrabold text-xs text-slate-900">{student.name}</h4>
+                <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono font-bold">
+                  Roll #{student.rollNo}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                {student.className} (Sec {student.section}) • Phone: {student.phone || 'Not updated'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={handleOpenProfileModal}
+            className="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold flex items-center gap-1 transition border border-emerald-200"
+            title="Click to view & submit student contact details"
+          >
+            <Pencil className="w-3 h-3" />
+            <span>अपडेट करें</span>
+          </button>
+        </div>
+
         {/* WHITE ROUNDED CARD: 3-COLUMN ICON GRID (#05574F Title) */}
         <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
           <div className="flex items-center justify-between mb-4">
@@ -260,9 +343,13 @@ export default function ParentPortal({
           <span className="text-[10px] font-bold mt-0.5">Home</span>
         </button>
 
-        <button className="flex flex-col items-center text-slate-400 hover:text-[#05574F]">
-          <Users className="w-5 h-5" />
-          <span className="text-[10px] font-bold mt-0.5">Group</span>
+        <button
+          onClick={handleOpenProfileModal}
+          className="flex flex-col items-center text-slate-400 hover:text-[#05574F]"
+          title="My Profile & Contact Details (मेरी जानकारी)"
+        >
+          <User className="w-5 h-5" />
+          <span className="text-[10px] font-bold mt-0.5">Profile</span>
         </button>
 
         {/* Center Big Yellow Floating Action Button (#FDBE3E) */}
@@ -715,6 +802,154 @@ export default function ParentPortal({
                 <span className="text-[10px] font-bold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded">National</span>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* STUDENT PROFILE & UPDATE DETAILS MODAL (विद्यार्थी जानकारी प्रविष्टि व सुधार) */}
+      {isProfileModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/75 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative border border-slate-100 max-h-[92vh] overflow-y-auto">
+            <button
+              onClick={() => setIsProfileModalOpen(false)}
+              className="absolute right-4 top-4 p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 pb-4 border-b border-slate-100 mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-[#05574F] text-[#FDBE3E] flex items-center justify-center shadow-md">
+                <User className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-slate-900 text-base sm:text-lg">
+                  My Profile & Details (विद्यार्थी जानकारी)
+                </h3>
+                <p className="text-xs text-slate-500 font-medium">
+                  {student.name} • {student.className} (Sec {student.section})
+                </p>
+              </div>
+            </div>
+
+            {/* School Registered Info (Fixed) */}
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl mb-4 grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold uppercase block">Admission No</span>
+                <span className="font-mono font-bold text-slate-800">{student.admissionNo}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold uppercase block">Roll Number</span>
+                <span className="font-mono font-bold text-slate-800">#{student.rollNo}</span>
+              </div>
+            </div>
+
+            {/* Editable Profile Information Form */}
+            <form onSubmit={handleSaveProfileSubmit} className="space-y-3.5 text-xs">
+              <div className="flex items-center gap-1.5 text-emerald-800 font-bold text-[11px] mb-1">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <span>अपनी संपर्क व पारिवारिक जानकारी यहाँ अपडेट करें:</span>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Parent Mobile / WhatsApp Phone *</label>
+                <input
+                  type="tel"
+                  required
+                  value={profileEditData.phone}
+                  onChange={(e) => setProfileEditData({ ...profileEditData, phone: e.target.value })}
+                  placeholder="+91 98765 00000"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-600 outline-none font-medium"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">Emergency Phone</label>
+                  <input
+                    type="tel"
+                    value={profileEditData.emergencyContact}
+                    onChange={(e) => setProfileEditData({ ...profileEditData, emergencyContact: e.target.value })}
+                    placeholder="Alternate number"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-600 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">Blood Group</label>
+                  <select
+                    value={profileEditData.bloodGroup}
+                    onChange={(e) => setProfileEditData({ ...profileEditData, bloodGroup: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-600 outline-none bg-white font-medium"
+                  >
+                    {['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'].map((b) => (
+                      <option key={b} value={b}>{b}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Email ID</label>
+                <input
+                  type="email"
+                  value={profileEditData.email}
+                  onChange={(e) => setProfileEditData({ ...profileEditData, email: e.target.value })}
+                  placeholder="parent@example.com"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-600 outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">Father's Name</label>
+                  <input
+                    type="text"
+                    value={profileEditData.fatherName}
+                    onChange={(e) => setProfileEditData({ ...profileEditData, fatherName: e.target.value })}
+                    placeholder="Father Name"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-600 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">Mother's Name</label>
+                  <input
+                    type="text"
+                    value={profileEditData.motherName}
+                    onChange={(e) => setProfileEditData({ ...profileEditData, motherName: e.target.value })}
+                    placeholder="Mother Name"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-600 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Residential Home Address *</label>
+                <textarea
+                  rows="2"
+                  required
+                  value={profileEditData.address}
+                  onChange={(e) => setProfileEditData({ ...profileEditData, address: e.target.value })}
+                  placeholder="House number, Street, Area, City..."
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-600 outline-none resize-none"
+                ></textarea>
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsProfileModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-[#05574F] hover:bg-emerald-800 text-white font-bold shadow-sm flex items-center gap-1.5"
+                >
+                  <Save className="w-4 h-4 text-[#FDBE3E]" />
+                  <span>Save & Submit Details (सहेजें)</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

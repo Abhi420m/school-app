@@ -37,7 +37,7 @@ export default function Navbar({
 }) {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  // Navigation tabs based on user role
+  // Navigation tabs based on user role (School Portal has ONLY school details)
   const adminNavItems = [
     { id: 'dashboard', label: t.navDashboard, icon: LayoutDashboard },
     { id: 'classes', label: t.navClasses, icon: GraduationCap },
@@ -45,8 +45,7 @@ export default function Navbar({
     { id: 'teachers', label: t.navTeachers, icon: Contact },
     { id: 'attendance', label: t.navAttendance, icon: CalendarCheck2 },
     { id: 'exams', label: t.navExams, icon: FileSpreadsheet },
-    { id: 'notices', label: t.navNotices, icon: BellRing },
-    { id: 'parent-view', label: t.navParentView, icon: HeartHandshake, badge: 'Parent View' }
+    { id: 'notices', label: t.navNotices, icon: BellRing }
   ];
 
   const teacherNavItems = [
@@ -129,6 +128,24 @@ export default function Navbar({
             >
               <Settings className="w-3.5 h-3.5 text-blue-600" />
               <span className="hidden sm:inline">Settings</span>
+            </button>
+          )}
+
+          {/* Preview Parent App (Only for school admin who wants to test) */}
+          {currentSession?.role === 'school_admin' && (
+            <button
+              onClick={() => setActiveTab(activeTab === 'parent-view' ? 'dashboard' : 'parent-view')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-xs ${
+                activeTab === 'parent-view'
+                  ? 'bg-blue-600 text-white border-blue-700'
+                  : 'border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900'
+              }`}
+              title="Preview how students & parents view their app"
+            >
+              <HeartHandshake className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">
+                {activeTab === 'parent-view' ? '← School Portal' : 'Parent App View'}
+              </span>
             </button>
           )}
 

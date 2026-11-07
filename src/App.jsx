@@ -58,7 +58,7 @@ export default function App() {
 
   // Handle Login Authentication
   const handleLogin = (identifier, password) => {
-    const authResult = authenticateUser(identifier, password, users, schools);
+    const authResult = authenticateUser(identifier, password, users, schools, allData);
     if (authResult.success) {
       setMultiSchoolState((prev) => ({
         ...prev,
@@ -454,6 +454,7 @@ export default function App() {
             notices={currentSchoolData.notices || []}
             todayDate={todayDate}
             onOpenReportCard={handleOpenReportCard}
+            onUpdateStudent={handleUpdateStudent}
             t={t}
           />
         )}

@@ -15,7 +15,10 @@ import {
   AlertCircle,
   Globe,
   KeyRound,
-  GraduationCap
+  GraduationCap,
+  Users,
+  Smartphone,
+  BookOpen
 } from 'lucide-react';
 
 export default function AuthScreen({
@@ -27,7 +30,7 @@ export default function AuthScreen({
   setLang,
   t
 }) {
-  const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
+  const [authMode, setAuthMode] = useState('school_login'); // 'school_login' | 'parent_login' | 'register'
   
   // Login Form State
   const [loginIdentifier, setLoginIdentifier] = useState('');
@@ -108,7 +111,7 @@ export default function AuthScreen({
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-slate-100 flex flex-col justify-between p-4 sm:p-6 lg:p-8 relative">
       {/* Background glowing orbs */}
       <div className="absolute top-10 left-10 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-10 right-10 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute bottom-10 right-10 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none"></div>
 
       {/* Top Header with App Logo & Language switch */}
       <header className="max-w-6xl w-full mx-auto flex items-center justify-between relative z-10">
@@ -137,40 +140,40 @@ export default function AuthScreen({
       {/* Main Container */}
       <main className="max-w-5xl w-full mx-auto my-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
         
-        {/* Left Side: Privacy & System Pitch */}
+        {/* Left Side: Pitch & Portals Overview */}
         <div className="lg:col-span-5 space-y-6">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/15 border border-blue-400/30 text-blue-300 text-xs font-bold uppercase tracking-wider">
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            100% Private & Secure School Accounts
+            Isolated Portals • Complete Privacy
           </div>
 
           <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight">
-            One School Cannot See Another School's Data.
+            Separate Portals for School Management & Students.
           </h2>
 
-          <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-            हर स्कूल का अपना अलग यूजर अकाउंट और सुरक्षित पासवर्ड है। स्कूल एडमिन केवल अपने ही स्कूल के छात्र, शिक्षक, हाजिरी और परीक्षा परिणाम देख सकते हैं।
+          <p className="text-sm text-slate-300 leading-relaxed">
+            School staff gets full operational controls (Curriculum, Fees, Attendance & Exams), while Students & Parents get a personalized view of their academic records with self-service detail updates.
           </p>
 
-          {/* Key Security Pillars */}
+          {/* Highlights */}
           <div className="space-y-3 pt-2">
-            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                <CheckCircle2 className="w-4 h-4" />
+            <div className="flex items-start gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
+              <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-300 flex items-center justify-center shrink-0">
+                <School className="w-4 h-4" />
               </div>
               <div className="text-xs">
-                <h4 className="font-bold text-white">Isolated Database per School</h4>
-                <p className="text-slate-400 mt-0.5">School A's data is never visible to School B or any other school user.</p>
+                <h4 className="font-bold text-white">School Portal (केवल स्कूल प्रबंधन)</h4>
+                <p className="text-slate-400 mt-0.5">Classes, Student Directory, Teacher Roster, Attendance & Marksheets.</p>
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
-              <div className="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
-                <KeyRound className="w-4 h-4" />
+            <div className="flex items-start gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center shrink-0">
+                <Smartphone className="w-4 h-4" />
               </div>
               <div className="text-xs">
-                <h4 className="font-bold text-white">Multi-Role Authentication</h4>
-                <p className="text-slate-400 mt-0.5">Dedicated logins for School Principals, Teachers, and Parents.</p>
+                <h4 className="font-bold text-white">Student & Parent App (विद्यार्थी ऐप)</h4>
+                <p className="text-slate-400 mt-0.5">Check marks & timetable, view fees, and submit updated contact details.</p>
               </div>
             </div>
           </div>
@@ -179,35 +182,57 @@ export default function AuthScreen({
         {/* Right Side: Auth Form Card */}
         <div className="lg:col-span-7 bg-white text-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 relative">
           
-          {/* Tab Navigation: Login vs Register */}
-          <div className="flex p-1 bg-slate-100 rounded-2xl mb-6">
+          {/* 3-Way Mode Switcher: School Portal vs Parent App vs Register */}
+          <div className="grid grid-cols-3 p-1 bg-slate-100 rounded-2xl mb-6 gap-1">
             <button
               type="button"
               onClick={() => {
-                setAuthMode('login');
+                setAuthMode('school_login');
                 setErrorMessage('');
+                setLoginIdentifier('xavier@school.com');
+                setLoginPassword('123');
               }}
-              className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all ${
-                authMode === 'login'
-                  ? 'bg-white text-blue-700 shadow-sm'
+              className={`py-2 px-1 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                authMode === 'school_login'
+                  ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              School / User Login (लॉगिन)
+              <School className="w-3.5 h-3.5" />
+              <span>School Portal</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode('parent_login');
+                setErrorMessage('');
+                setLoginIdentifier('9871122334');
+                setLoginPassword('123');
+              }}
+              className={`py-2 px-1 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                authMode === 'parent_login'
+                  ? 'bg-emerald-700 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>Parent / Student</span>
+            </button>
+
             <button
               type="button"
               onClick={() => {
                 setAuthMode('register');
                 setErrorMessage('');
               }}
-              className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all ${
+              className={`py-2 px-1 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1 ${
                 authMode === 'register'
-                  ? 'bg-white text-blue-700 shadow-sm'
+                  ? 'bg-slate-900 text-white shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              + Register New School (नया स्कूल जोड़ें)
+              <span>+ Register</span>
             </button>
           </div>
 
@@ -219,20 +244,25 @@ export default function AuthScreen({
             </div>
           )}
 
-          {/* Mode 1: Login Form */}
-          {authMode === 'login' && (
+          {/* MODE 1: SCHOOL PORTAL LOGIN (केवल स्कूल प्रबंधन) */}
+          {authMode === 'school_login' && (
             <div>
               <div className="mb-5">
-                <h3 className="text-xl font-bold text-slate-900">Sign in to your School Portal</h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Enter your school admin email, teacher email, or registered phone number with password.
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
+                    <School className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-lg font-extrabold text-slate-900">School Management Portal (स्कूल पोर्टल)</h3>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Principal, Admin & Faculty login for school operations, students directory, fees, attendance and marksheets.
                 </p>
               </div>
 
               <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs">
                 <div>
                   <label className="block text-slate-700 font-bold mb-1">
-                    Email, Phone Number, or Username *
+                    School Admin / Teacher Email or Username *
                   </label>
                   <div className="relative">
                     <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
@@ -241,7 +271,7 @@ export default function AuthScreen({
                       required
                       value={loginIdentifier}
                       onChange={(e) => setLoginIdentifier(e.target.value)}
-                      placeholder="e.g. xavier@school.com or 9876543210"
+                      placeholder="e.g. xavier@school.com"
                       className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 rounded-xl outline-none font-medium text-slate-900"
                     />
                   </div>
@@ -258,7 +288,7 @@ export default function AuthScreen({
                       required
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
-                      placeholder="Enter your secret password"
+                      placeholder="Enter admin password"
                       className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 rounded-xl outline-none font-medium text-slate-900"
                     />
                     <button
@@ -275,76 +305,150 @@ export default function AuthScreen({
                   type="submit"
                   className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-sm mt-2"
                 >
-                  <span>Login to School (लॉगिन करें)</span>
+                  <School className="w-4 h-4" />
+                  <span>Open School Portal (स्कूल पोर्टल खोलें)</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </form>
 
-              {/* 1-Click Fast Demo Login Buttons */}
-              <div className="mt-6 pt-5 border-t border-slate-100">
-                <p className="text-[11px] font-black uppercase tracking-wider text-slate-400 mb-2.5">
-                  1-Click Test Demo Logins (परीक्षण के लिए सीधा लॉगिन करें):
+              {/* 1-Click Fast School Logins */}
+              <div className="mt-5 pt-4 border-t border-slate-100">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">
+                  1-Click Fast School Login (परीक्षण हेतु):
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => handleQuickDemoLogin('xavier@school.com', '123')}
-                    className="p-2.5 rounded-xl border border-blue-200 bg-blue-50/60 hover:bg-blue-100 text-left transition flex items-center justify-between"
+                    className="p-2 rounded-xl border border-blue-200 bg-blue-50/60 hover:bg-blue-100 text-left transition"
                   >
-                    <div>
-                      <p className="font-extrabold text-blue-900 text-xs">St. Xavier's Admin</p>
-                      <p className="text-[10px] text-blue-700">xavier@school.com • 123</p>
-                    </div>
-                    <span className="text-[10px] font-bold bg-blue-200 text-blue-900 px-2 py-0.5 rounded-full">School 1</span>
+                    <p className="font-extrabold text-blue-900 text-xs">St. Xavier's</p>
+                    <p className="text-[10px] text-blue-700">xavier@school.com</p>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleQuickDemoLogin('dps@school.com', '123')}
-                    className="p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100 text-left transition flex items-center justify-between"
+                    className="p-2 rounded-xl border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100 text-left transition"
                   >
-                    <div>
-                      <p className="font-extrabold text-emerald-900 text-xs">DPS Gurugram Admin</p>
-                      <p className="text-[10px] text-emerald-700">dps@school.com • 123</p>
-                    </div>
-                    <span className="text-[10px] font-bold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full">School 2</span>
+                    <p className="font-extrabold text-emerald-900 text-xs">DPS Model</p>
+                    <p className="text-[10px] text-emerald-700">dps@school.com</p>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleQuickDemoLogin('svm@school.com', '123')}
-                    className="p-2.5 rounded-xl border border-amber-200 bg-amber-50/60 hover:bg-amber-100 text-left transition flex items-center justify-between"
+                    className="p-2 rounded-xl border border-amber-200 bg-amber-50/60 hover:bg-amber-100 text-left transition"
                   >
-                    <div>
-                      <p className="font-extrabold text-amber-900 text-xs">Saraswati Vidya Mandir</p>
-                      <p className="text-[10px] text-amber-700">svm@school.com • 123</p>
-                    </div>
-                    <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full">School 3</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleQuickDemoLogin('9871122334', '123')}
-                    className="p-2.5 rounded-xl border border-purple-200 bg-purple-50/60 hover:bg-purple-100 text-left transition flex items-center justify-between"
-                  >
-                    <div>
-                      <p className="font-extrabold text-purple-900 text-xs">Parent Login (Aarav)</p>
-                      <p className="text-[10px] text-purple-700">Mobile: 9871122334 • 123</p>
-                    </div>
-                    <span className="text-[10px] font-bold bg-purple-200 text-purple-900 px-2 py-0.5 rounded-full">Parent</span>
+                    <p className="font-extrabold text-amber-900 text-xs">Saraswati VM</p>
+                    <p className="text-[10px] text-amber-700">svm@school.com</p>
                   </button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Mode 2: Register New School with Admin User */}
+          {/* MODE 2: STUDENT & PARENT APP LOGIN (विद्यार्थी एवं अभिभावक ऐप) */}
+          {authMode === 'parent_login' && (
+            <div>
+              <div className="mb-5">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                    <Smartphone className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-lg font-extrabold text-slate-900">Student & Parent App (विद्यार्थी ऐप)</h3>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Login with registered Mobile Number, Admission Number, or Roll Number to check marks, timetable, attendance & submit your details.
+                </p>
+              </div>
+
+              <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs">
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">
+                    Student Mobile No / Admission No / Roll No *
+                  </label>
+                  <div className="relative">
+                    <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
+                    <input
+                      type="text"
+                      required
+                      value={loginIdentifier}
+                      onChange={(e) => setLoginIdentifier(e.target.value)}
+                      placeholder="e.g. 9871122334 or ADM-2023-1001"
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-600 rounded-xl outline-none font-medium text-slate-900"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">
+                    PIN / Password * (Default: 123)
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      placeholder="Enter PIN (e.g. 123)"
+                      className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-600 rounded-xl outline-none font-medium text-slate-900"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-[#05574F] hover:bg-emerald-800 text-white font-extrabold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-sm mt-2"
+                >
+                  <Smartphone className="w-4 h-4 text-[#FDBE3E]" />
+                  <span>Open Student & Parent App (ऐप में प्रवेश करें)</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </form>
+
+              {/* 1-Click Fast Student / Parent Login */}
+              <div className="mt-5 pt-4 border-t border-slate-100">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">
+                  1-Click Fast Student / Parent Login (परीक्षण हेतु):
+                </p>
+                <button
+                  type="button"
+                  onClick={() => handleQuickDemoLogin('9871122334', '123')}
+                  className="w-full p-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100 text-left transition flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-[#05574F] text-[#FDBE3E] font-black text-sm flex items-center justify-center">
+                      A
+                    </div>
+                    <div>
+                      <p className="font-extrabold text-emerald-950 text-xs">Aarav Sharma (Class 10-A)</p>
+                      <p className="text-[10px] text-emerald-800">Phone: 9871122334 • PIN: 123</p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold bg-emerald-700 text-white px-2.5 py-1 rounded-full">
+                    Student Login →
+                  </span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* MODE 3: REGISTER NEW SCHOOL */}
           {authMode === 'register' && (
             <div>
               <div className="mb-4">
                 <h3 className="text-xl font-bold text-slate-900">Register New School Account</h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  Create a new independent school campus. You will set the admin login credentials to keep it completely private.
+                  Create a new independent school campus with private database and admin credentials.
                 </p>
               </div>
 
@@ -363,16 +467,16 @@ export default function AuthScreen({
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-slate-700 font-bold mb-1">{t.educationBoard} *</label>
+                    <label className="block text-slate-700 font-bold mb-1">{t.boardAffiliation} *</label>
                     <select
                       value={registerData.board}
                       onChange={(e) => setRegisterData({ ...registerData, board: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none bg-white"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none bg-white font-medium"
                     >
-                      <option value="CBSE">CBSE (Central Board)</option>
-                      <option value="ICSE">ICSE / ISC Board</option>
+                      <option value="CBSE">CBSE Board</option>
+                      <option value="ICSE">ICSE / CISCE</option>
                       <option value="State Board">State Board</option>
-                      <option value="Cambridge">Cambridge / IGCSE</option>
+                      <option value="IB / Cambridge">IB / Cambridge</option>
                     </select>
                   </div>
                   <div>
@@ -382,8 +486,7 @@ export default function AuthScreen({
                       required
                       value={registerData.code}
                       onChange={(e) => setRegisterData({ ...registerData, code: e.target.value })}
-                      placeholder="e.g. CBSE-90214"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none font-mono"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono font-bold text-blue-700 outline-none"
                     />
                   </div>
                 </div>
@@ -396,7 +499,7 @@ export default function AuthScreen({
                       required
                       value={registerData.principal}
                       onChange={(e) => setRegisterData({ ...registerData, principal: e.target.value })}
-                      placeholder="e.g. Dr. A.K. Singhal"
+                      placeholder="Dr. / Mrs. ..."
                       className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none"
                     />
                   </div>
@@ -432,7 +535,7 @@ export default function AuthScreen({
                       required
                       value={registerData.city}
                       onChange={(e) => setRegisterData({ ...registerData, city: e.target.value })}
-                      placeholder="e.g. Delhi / Lucknow / Jaipur"
+                      placeholder="e.g. Delhi / Jaipur"
                       className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none"
                     />
                   </div>
@@ -490,7 +593,7 @@ export default function AuthScreen({
 
       {/* Footer */}
       <footer className="text-center text-xs text-slate-400 py-2 relative z-10">
-        VidyaSetu Multi-School ERP • Complete Privacy & Tenant Isolation System
+        VidyaSetu Multi-School ERP • Separate Portals for School & Students
       </footer>
     </div>
   );

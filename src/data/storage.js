@@ -93,42 +93,74 @@ export function saveLanguage(lang) {
   }
 }
 
-// User Authentication: Match by Email, Username, or Phone Number
-export function authenticateUser(identifier, password, users, schools) {
+// User Authentication: Match by Email, Username, Phone Number, or Student Admission/Roll
+export function authenticateUser(identifier, password, users, schools, allData = {}) {
   const cleanId = (identifier || '').trim().toLowerCase();
   const cleanPass = (password || '').trim();
 
-  // Find user matching credentials
+  // 1. Find user matching credentials in registered users list
   const foundUser = users.find((u) => {
     const emailMatch = u.email && u.email.toLowerCase() === cleanId;
     const userMatch = u.username && u.username.toLowerCase() === cleanId;
     const phoneMatch = u.phone && u.phone.replace(/[^0-9]/g, '') === cleanId.replace(/[^0-9]/g, '');
-    
+
     // Also check school code (e.g. CBSE-20491)
-    const school = schools.find(s => s.id === u.schoolId);
+    const school = schools.find((s) => s.id === u.schoolId);
     const codeMatch = school && school.code && school.code.toLowerCase() === cleanId;
 
     return (emailMatch || userMatch || phoneMatch || codeMatch) && u.password === cleanPass;
   });
 
-  if (!foundUser) {
-    return { success: false, error: "Invalid Email, Phone, or Password. Please try again." };
+  if (foundUser) {
+    const userSchool = schools.find((s) => s.id === foundUser.schoolId) || schools[0];
+    const session = {
+      userId: foundUser.id,
+      userName: foundUser.name,
+      role: foundUser.role, // 'school_admin' | 'teacher' | 'parent'
+      email: foundUser.email,
+      phone: foundUser.phone,
+      schoolId: foundUser.schoolId,
+      studentId: foundUser.studentId || null,
+      schoolName: userSchool.name
+    };
+
+    saveCurrentSession(session);
+    return { success: true, session, userSchool };
   }
 
-  const userSchool = schools.find((s) => s.id === foundUser.schoolId) || schools[0];
+  // 2. Student / Parent Direct Login via Admission No, Roll No, or Parent Phone
+  for (const school of schools) {
+    const schoolData = allData[school.id];
+    if (schoolData && schoolData.students) {
+      const foundStudent = schoolData.students.find((s) => {
+        const admMatch = s.admissionNo && s.admissionNo.toLowerCase() === cleanId;
+        const phoneMatch = s.phone && s.phone.replace(/[^0-9]/g, '') === cleanId.replace(/[^0-9]/g, '');
+        const rollMatch = s.rollNo && s.rollNo.toString() === cleanId;
+        return admMatch || phoneMatch || rollMatch;
+      });
 
-  const session = {
-    userId: foundUser.id,
-    userName: foundUser.name,
-    role: foundUser.role, // 'school_admin' | 'teacher' | 'parent'
-    email: foundUser.email,
-    schoolId: foundUser.schoolId,
-    studentId: foundUser.studentId || null,
-    schoolName: userSchool.name
-  };
+      if (foundStudent) {
+        // Password can be '123' or their rollNo
+        if (cleanPass === '123' || cleanPass === foundStudent.rollNo?.toString()) {
+          const session = {
+            userId: `USR-STU-${foundStudent.id}`,
+            userName: `${foundStudent.name} (Student / Parent)`,
+            role: 'parent',
+            email: foundStudent.email || '',
+            phone: foundStudent.phone,
+            schoolId: school.id,
+            studentId: foundStudent.id,
+            schoolName: school.name
+          };
 
-  saveCurrentSession(session);
-  return { success: true, session, userSchool };
+          saveCurrentSession(session);
+          return { success: true, session, userSchool: school };
+        }
+      }
+    }
+  }
+
+  return { success: false, error: "Invalid Email, Phone, Admission No, or Password. Please try again." };
 }
 
 // Register School With Admin Account
