@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import DownloadAppModal from './DownloadAppModal';
 import {
   Calendar,
   Wallet,
@@ -23,7 +24,9 @@ import {
   Users,
   X,
   FileText,
-  DollarSign
+  DollarSign,
+  Smartphone,
+  Download
 } from 'lucide-react';
 import { getStudentAttendanceSummary } from '../data/storage';
 
@@ -44,6 +47,7 @@ export default function ParentPortal({
   const defaultSiblings = students.slice(0, 2);
   const [selectedChildIndex, setSelectedChildIndex] = useState(0);
   const [isSwitchModalOpen, setIsSwitchModalOpen] = useState(false);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [activeServiceModal, setActiveServiceModal] = useState(null);
 
   const student = defaultSiblings[selectedChildIndex] || students[0];
@@ -109,7 +113,15 @@ export default function ParentPortal({
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setIsDownloadModalOpen(true)}
+              className="px-2.5 py-1.5 rounded-xl bg-[#FDBE3E] hover:bg-amber-400 text-[#05574F] text-[11px] font-black flex items-center gap-1 shadow-sm transition active:scale-95"
+              title="Download Android APK & Apple iOS App"
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>Get App</span>
+            </button>
             <button className="p-2 rounded-full hover:bg-white/10 text-white relative">
               <Bell className="w-5 h-5" />
               <span className="w-2 h-2 rounded-full bg-[#FDBE3E] absolute top-2 right-2"></span>
@@ -415,6 +427,11 @@ export default function ParentPortal({
             </div>
           </div>
         </div>
+      )}
+
+      {/* DOWNLOAD MOBILE APP MODAL (Android & Apple iOS) */}
+      {isDownloadModalOpen && (
+        <DownloadAppModal onClose={() => setIsDownloadModalOpen(false)} />
       )}
     </div>
   );

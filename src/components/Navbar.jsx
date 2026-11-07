@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import DownloadAppModal from './DownloadAppModal';
 import {
   School,
   LayoutDashboard,
@@ -14,7 +15,8 @@ import {
   LogOut,
   UserCheck,
   ShieldCheck,
-  KeyRound
+  KeyRound,
+  Smartphone
 } from 'lucide-react';
 
 export default function Navbar({
@@ -30,6 +32,7 @@ export default function Navbar({
   searchTerm,
   setSearchTerm
 }) {
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   // Navigation tabs based on user role
   const adminNavItems = [
     { id: 'dashboard', label: t.navDashboard, icon: LayoutDashboard },
@@ -100,6 +103,16 @@ export default function Navbar({
             </div>
           </div>
 
+          {/* Download Mobile App Button */}
+          <button
+            onClick={() => setIsDownloadModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#05574F] hover:bg-[#076c62] text-white text-xs font-bold transition shadow-xs"
+            title="Download Android & Apple App"
+          >
+            <Smartphone className="w-3.5 h-3.5 text-[#FDBE3E]" />
+            <span className="hidden sm:inline">Get App</span>
+          </button>
+
           {/* Language Toggle */}
           <button
             onClick={() => setLang(lang === 'en' ? 'hi' : 'en')}
@@ -162,6 +175,11 @@ export default function Navbar({
           />
         </div>
       </div>
+
+      {/* Download Mobile App Modal */}
+      {isDownloadModalOpen && (
+        <DownloadAppModal onClose={() => setIsDownloadModalOpen(false)} />
+      )}
     </header>
   );
 }
