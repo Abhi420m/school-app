@@ -31,7 +31,8 @@ import {
   User,
   Pencil,
   Save,
-  ShieldCheck
+  ShieldCheck,
+  Search
 } from 'lucide-react';
 import { getStudentAttendanceSummary } from '../data/storage';
 
@@ -63,7 +64,46 @@ export default function ParentPortal({
   const [activeServiceModal, setActiveServiceModal] = useState(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
-  const student = parentChildren[selectedChildIndex] || parentChildren[0] || students[0];
+  // Fast Automatic Student Lookup / Switch State ("detail dalte hi sab kuch automatic show ho jaye")
+  const [quickSearchInput, setQuickSearchInput] = useState('');
+  const [matchedCustomStudent, setMatchedCustomStudent] = useState(null);
+
+  const handleQuickSearch = (query) => {
+    setQuickSearchInput(query);
+    const q = (query || '').trim().toLowerCase();
+    if (!q) {
+      setMatchedCustomStudent(null);
+      return;
+    }
+    const cleanDigits = q.replace(/[^0-9]/g, '');
+    const found = students.find((s) => {
+      const matchRoll = s.rollNo && s.rollNo.toString().toLowerCase() === q;
+      const matchPhone = cleanDigits.length >= 3 && s.phone && s.phone.replace(/[^0-9]/g, '').includes(cleanDigits);
+      const matchAdm = s.admissionNo && s.admissionNo.toLowerCase().includes(q);
+      const matchName = s.name && s.name.toLowerCase().includes(q);
+      return matchRoll || matchPhone || matchAdm || matchName;
+    });
+
+    if (found) {
+      setMatchedCustomStudent(found);
+    }
+  };
+
+  const student = matchedCustomStudent || parentChildren[selectedChildIndex] || parentChildren[0] || students[0];
+
+  // Live Dynamic Calculations for the active student
+  const studentFeeTotal = Number(student?.feeAmount) || 36000;
+  const studentFeePaid = Number(student?.feePaid) || 0;
+  const studentFeeDue = Math.max(0, studentFeeTotal - studentFeePaid);
+
+  const stuExams = (student && exams[student.id]) || [];
+  const latestExam = stuExams[0] || null;
+  const studentPercentage = latestExam
+    ? `${latestExam.percentage}%`
+    : `${(parseFloat(student?.attendancePercentage || 92) * 0.95).toFixed(1)}%`;
+  const studentGrade = latestExam ? latestExam.overallGrade : 'A1';
+
+  const classHomework = homework.filter((hw) => !hw.className || hw.className === student?.className);
 
   // Student Profile Edit State (so students/parents can give/update their own details)
   const [profileEditData, setProfileEditData] = useState({
@@ -126,12 +166,40 @@ export default function ParentPortal({
   const attendanceSummary = student ? getStudentAttendanceSummary(student.id, attendance) : null;
   const todayStatus = (attendance[todayDate] && student) ? (attendance[todayDate][student.id] || 'Present') : 'Present';
 
-  // 12 Services matching Design Guide Section 3
+  // 12 Live Services with Auto-Calculated Status
   const services = [
-    { id: 'attendance', title: 'Attendance', hi: 'हाजिरी', icon: Calendar, bg: 'bg-emerald-50 text-emerald-700', badge: 'Live' },
-    { id: 'fees', title: 'Fees', hi: 'फीस', icon: Wallet, bg: 'bg-amber-50 text-amber-700', badge: '₹0 Due' },
-    { id: 'results', title: 'Results', hi: 'रिजल्ट', icon: Trophy, bg: 'bg-purple-50 text-purple-700', badge: 'Term 1' },
-    { id: 'homework', title: 'Homework', hi: 'गृहकार्य', icon: BookOpen, bg: 'bg-blue-50 text-blue-700', count: homework.length },
+    {
+      id: 'attendance',
+      title: 'Attendance',
+      hi: 'हाजिरी',
+      icon: Calendar,
+      bg: 'bg-emerald-50 text-emerald-700',
+      badge: `${attendanceSummary ? attendanceSummary.rate : student?.attendancePercentage || 95}%`
+    },
+    {
+      id: 'fees',
+      title: 'Fees',
+      hi: 'फीस',
+      icon: Wallet,
+      bg: 'bg-amber-50 text-amber-700',
+      badge: studentFeeDue === 0 ? '₹0 Due' : `₹${studentFeeDue.toLocaleString()} Due`
+    },
+    {
+      id: 'results',
+      title: 'Results',
+      hi: 'रिजल्ट',
+      icon: Trophy,
+      bg: 'bg-purple-50 text-purple-700',
+      badge: studentGrade
+    },
+    {
+      id: 'homework',
+      title: 'Homework',
+      hi: 'गृहकार्य',
+      icon: BookOpen,
+      bg: 'bg-blue-50 text-blue-700',
+      count: classHomework.length
+    },
     { id: 'notice', title: 'Notice', hi: 'सूचना', icon: Bell, bg: 'bg-rose-50 text-rose-700', count: notices.length },
     { id: 'leave', title: 'Leave', hi: 'अवकाश', icon: CalendarX, bg: 'bg-indigo-50 text-indigo-700' },
     { id: 'timetable', title: 'Time Table', hi: 'समय सारणी', icon: Clock, bg: 'bg-teal-50 text-teal-700' },
@@ -197,11 +265,34 @@ export default function ParentPortal({
         <div className="flex items-center justify-between mt-4 pt-2 border-t border-white/10 text-xs">
           <div className="flex items-center gap-1.5 text-white/80">
             <Sun className="w-4 h-4 text-[#FDBE3E]" />
-            <span>Good Morning, Parents</span>
+            <span>Good Morning, Parents & Students</span>
           </div>
           <span className="text-[#B2DFDB] font-semibold text-[11px]">
             {new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}
           </span>
+        </div>
+
+        {/* Instant Automatic Student Lookup / Switcher (डिटेल डालते ही छात्र विवरण लोड) */}
+        <div className="mt-3 relative">
+          <Search className="w-3.5 h-3.5 text-[#B2DFDB] absolute left-3 top-2.5 pointer-events-none" />
+          <input
+            type="text"
+            value={quickSearchInput}
+            onChange={(e) => handleQuickSearch(e.target.value)}
+            placeholder="रोल नं / मोबाइल / नाम डालते ही पूरा रिकॉर्ड देखें..."
+            className="w-full pl-8 pr-8 py-2 rounded-xl bg-white/15 border border-white/20 text-white placeholder-white/70 text-xs outline-none focus:bg-white/25 focus:border-[#FDBE3E] transition font-medium"
+          />
+          {quickSearchInput && (
+            <button
+              onClick={() => {
+                setQuickSearchInput('');
+                setMatchedCustomStudent(null);
+              }}
+              className="absolute right-2.5 top-2 text-white/70 hover:text-white"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -442,20 +533,33 @@ export default function ParentPortal({
               </button>
             </div>
             <div className="py-4 text-center">
-              <div className="w-16 h-16 rounded-full bg-purple-50 text-purple-700 flex items-center justify-center mx-auto mb-2 font-black text-2xl">
-                92%
+              <div className="w-16 h-16 rounded-full bg-purple-50 text-purple-700 flex items-center justify-center mx-auto mb-2 font-black text-2xl shadow-xs">
+                {studentPercentage}
               </div>
               <h5 className="font-black text-slate-900 text-base">{student.name}</h5>
-              <p className="text-xs text-slate-500">Overall Grade: A1 • Rank #2</p>
+              <p className="text-xs text-slate-500">
+                Grade: <strong className="text-emerald-700">{studentGrade}</strong> • Rank #{latestExam?.rank || (parseInt(student.rollNo) % 10 + 1)}
+              </p>
+              {latestExam && (
+                <div className="mt-3 p-3 bg-slate-50 rounded-2xl text-left text-xs border border-slate-100">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                    {latestExam.term}
+                  </span>
+                  <div className="flex justify-between font-bold text-slate-800">
+                    <span>Marks Obtained:</span>
+                    <span>{latestExam.obtainedTotal} / {latestExam.maxTotal}</span>
+                  </div>
+                </div>
+              )}
               <button
                 onClick={() => {
                   setActiveServiceModal(null);
-                  onOpenReportCard(student);
+                  onOpenReportCard(student, latestExam);
                 }}
-                className="mt-4 w-full py-2.5 rounded-xl bg-[#05574F] text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5"
+                className="mt-4 w-full py-2.5 rounded-xl bg-[#05574F] text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 hover:bg-emerald-800 transition"
               >
-                <FileText className="w-4 h-4" />
-                <span>View Official Marksheet</span>
+                <FileText className="w-4 h-4 text-[#FDBE3E]" />
+                <span>View Official CBSE Report Card</span>
               </button>
             </div>
           </div>
@@ -474,19 +578,25 @@ export default function ParentPortal({
             <div className="py-4 space-y-3 text-xs">
               <div className="flex justify-between py-1 border-b">
                 <span className="text-slate-500">Annual Tuition Fee:</span>
-                <span className="font-bold">₹{student.feeAmount?.toLocaleString() || '36,000'}</span>
+                <span className="font-bold">₹{studentFeeTotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between py-1 border-b">
                 <span className="text-slate-500">Amount Paid:</span>
-                <span className="font-bold text-emerald-600">₹{student.feePaid?.toLocaleString() || '36,000'}</span>
+                <span className="font-bold text-emerald-600">₹{studentFeePaid.toLocaleString()}</span>
               </div>
               <div className="flex justify-between py-1 font-bold">
                 <span>Balance Due:</span>
-                <span className="text-emerald-700">₹0 (All Clear)</span>
+                <span className={studentFeeDue === 0 ? "text-emerald-700" : "text-red-600 font-black"}>
+                  {studentFeeDue === 0 ? "₹0 (All Clear)" : `₹${studentFeeDue.toLocaleString()} (Pending Due)`}
+                </span>
               </div>
               <button
-                onClick={() => alert("Receipt downloaded.")}
-                className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold flex items-center justify-center gap-1.5"
+                onClick={() =>
+                  alert(
+                    `Official Fee Receipt Generated:\nStudent: ${student.name} (Adm: ${student.admissionNo})\nClass: ${student.className} - Sec ${student.section}\nTotal Annual Fee: ₹${studentFeeTotal.toLocaleString()}\nTotal Paid: ₹${studentFeePaid.toLocaleString()}\nPending Due: ₹${studentFeeDue.toLocaleString()}\nStatus: ${student.feeStatus || 'Paid'}\n\nDownloaded successfully!`
+                  )
+                }
+                className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold flex items-center justify-center gap-1.5 shadow-sm"
               >
                 <Printer className="w-4 h-4" />
                 <span>Download Fee Receipt</span>
@@ -507,15 +617,19 @@ export default function ParentPortal({
             </div>
             <div className="py-4 text-center">
               <p className="text-3xl font-black text-emerald-700">
-                {attendanceSummary ? attendanceSummary.rate : student.attendancePercentage}%
+                {attendanceSummary ? `${attendanceSummary.rate}%` : `${student.attendancePercentage || 95}%`}
               </p>
               <p className="text-xs text-slate-500 mt-1">Eligible for Annual CBSE Board Examinations</p>
               <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
                 <div className="p-2.5 bg-emerald-50 rounded-xl">
-                  <span className="font-bold text-emerald-800">26 Days Present</span>
+                  <span className="font-bold text-emerald-800">
+                    {attendanceSummary ? attendanceSummary.presentDays : 26} Days Present
+                  </span>
                 </div>
                 <div className="p-2.5 bg-red-50 rounded-xl">
-                  <span className="font-bold text-red-800">1 Day Leave</span>
+                  <span className="font-bold text-red-800">
+                    {attendanceSummary ? attendanceSummary.absentDays : 1} Days Leave / Absent
+                  </span>
                 </div>
               </div>
             </div>
