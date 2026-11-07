@@ -12,6 +12,8 @@ import NoticeBoard from './components/NoticeBoard';
 import ReportCardModal from './components/ReportCardModal';
 import SchoolSettingsModal from './components/SchoolSettingsModal';
 import ParentAppShareModal from './components/ParentAppShareModal';
+import VedantakshSupportWidget from './components/VedantakshSupportWidget';
+import VedantakshSuperAdminPortal from './components/VedantakshSuperAdminPortal';
 import {
   loadMultiSchoolData,
   authenticateUser,
@@ -39,6 +41,16 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState(null);
   const [isSchoolSettingsOpen, setIsSchoolSettingsOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  // Vedantaksh Technology Super Admin View Mode
+  const isDirectSuperAdminParam = typeof window !== 'undefined' && (
+    window.location.search.includes('portal=vedantaksh') ||
+    window.location.search.includes('mode=vedantaksh') ||
+    window.location.hash.includes('vedantaksh')
+  );
+  const [isSuperAdminView, setIsSuperAdminView] = useState(
+    isDirectSuperAdminParam || currentSession?.role === 'company_super_admin'
+  );
 
   // Selected student for Report Card Modal
   const [selectedStudentForReport, setSelectedStudentForReport] = useState(null);
@@ -105,6 +117,40 @@ export default function App() {
     showToast("Logged out successfully.");
   };
 
+  // If Vedantaksh Technology Super Admin portal is active
+  if (isSuperAdminView) {
+    return (
+      <VedantakshSuperAdminPortal
+        schools={schools}
+        allData={allData}
+        currentSession={currentSession}
+        onSuperAdminLogin={(newSession) => {
+          setMultiSchoolState((prev) => ({ ...prev, currentSession: newSession }));
+          showToast("Super Admin Authenticated via Google OTP 2FA!");
+        }}
+        onLogout={handleLogout}
+        onSwitchToSchoolView={(schoolId) => {
+          setIsSuperAdminView(false);
+          const targetSch = schools.find((s) => s.id === schoolId) || schools[0];
+          setMultiSchoolState((prev) => ({
+            ...prev,
+            currentSession: {
+              userId: 'USR-SUPERADMIN-INSPECT',
+              userName: 'Abhinav Pathak (Vedantaksh Inspector)',
+              role: 'school_admin',
+              email: 'abhinav.pathak@vedantakshtechnology.com',
+              schoolId: targetSch.id,
+              schoolName: targetSch.name
+            }
+          }));
+          setActiveTab('dashboard');
+          showToast(`Inspecting portal for ${targetSch.name}`);
+        }}
+        onExitSuperAdmin={() => setIsSuperAdminView(false)}
+      />
+    );
+  }
+
   // If no user is logged in, show the secure Auth / Login screen
   if (!currentSession) {
     return (
@@ -113,6 +159,7 @@ export default function App() {
         users={users}
         onLogin={handleLogin}
         onRegisterSchool={handleRegisterSchool}
+        onOpenSuperAdmin={() => setIsSuperAdminView(true)}
         lang={lang}
         setLang={handleLangChange}
         t={t}
@@ -483,6 +530,14 @@ export default function App() {
               </span>
               <span>•</span>
               <button
+                onClick={() => setIsSuperAdminView(true)}
+                className="text-slate-400 hover:text-red-500 flex items-center gap-1 transition text-[11px]"
+                title="Vedantaksh Technology Master Portal"
+              >
+                <span>VT Master Console</span>
+              </button>
+              <span>•</span>
+              <button
                 onClick={handleReset}
                 className="text-slate-400 hover:text-red-600 flex items-center gap-1 transition"
                 title="Reset to factory sample data"
@@ -526,6 +581,12 @@ export default function App() {
           onClose={() => setIsShareModalOpen(false)}
         />
       )}
+
+      {/* Vedantaksh Technology 24x7 Enterprise Customer Support Widget */}
+      <VedantakshSupportWidget
+        currentRole={currentSession?.role}
+        schoolName={activeSchool?.name}
+      />
     </div>
   );
 }

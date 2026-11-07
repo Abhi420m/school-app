@@ -6,7 +6,11 @@ import {
   AlertCircle,
   Tag,
   Clock,
-  X
+  X,
+  Share2,
+  Smartphone,
+  CheckCircle2,
+  Users
 } from 'lucide-react';
 
 export default function NoticeBoard({
@@ -19,6 +23,7 @@ export default function NoticeBoard({
     title: '',
     category: 'Academic',
     priority: 'Normal',
+    targetAudience: 'All School',
     date: new Date().toISOString().split('T')[0],
     description: ''
   });
@@ -41,6 +46,7 @@ export default function NoticeBoard({
       title: '',
       category: 'Academic',
       priority: 'Normal',
+      targetAudience: 'All School',
       date: new Date().toISOString().split('T')[0],
       description: ''
     });
@@ -79,7 +85,7 @@ export default function NoticeBoard({
             className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition flex flex-col justify-between"
           >
             <div>
-              <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+              <div className="flex items-center justify-between text-xs text-slate-500 mb-2 flex-wrap gap-1">
                 <span className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] ${
                   notice.priority === 'High'
                     ? 'bg-red-100 text-red-700'
@@ -89,7 +95,10 @@ export default function NoticeBoard({
                 }`}>
                   {notice.category} • {notice.priority} Priority
                 </span>
-                <span className="flex items-center gap-1 font-medium">
+                <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold text-[10px]">
+                  🎯 {notice.targetAudience || 'All School'}
+                </span>
+                <span className="flex items-center gap-1 font-medium text-[11px]">
                   <Calendar className="w-3.5 h-3.5" />
                   {notice.date}
                 </span>
@@ -99,9 +108,25 @@ export default function NoticeBoard({
               <p className="text-xs text-slate-600 mt-2 leading-relaxed">{notice.description}</p>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-              <span>Notice ID: {notice.id}</span>
-              <span className="text-emerald-600 font-bold">✓ Sent to Parents</span>
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 flex-wrap gap-2">
+              <span className="text-emerald-700 font-bold flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span>लाइव पेरेंट्स पोर्टल पर प्रेषित</span>
+              </span>
+
+              {/* 1-Click WhatsApp Broadcast Button */}
+              <a
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
+                  `🏫 *स्कूल आवश्यक सूचना (Official School Circular)*\n━━━━━━━━━━━━━━━━━━━━\n📌 *${notice.title}*\n🎯 किसके लिए: *${notice.targetAudience || 'सभी विद्यार्थी व अभिभावक'}*\n📅 दिनांक: ${notice.date}\n\n${notice.description}\n\n📲 *स्कूल ऐप पर देखने व पुष्टि हेतु लिंक:* \nhttps://abhi420m.github.io/school-app/?portal=parent`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white font-bold text-[11px] flex items-center gap-1.5 transition shadow-xs"
+                title="Broadcast this circular directly to Parents WhatsApp Group"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>WhatsApp पर भेजें (1-Click)</span>
+              </a>
             </div>
           </div>
         ))}
@@ -134,13 +159,13 @@ export default function NoticeBoard({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 <div>
                   <label className="block text-slate-600 font-semibold mb-1">Category</label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none bg-white"
+                    className="w-full px-2 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none bg-white text-xs font-medium"
                   >
                     <option value="Academic">Academic</option>
                     <option value="Sports">Sports</option>
@@ -154,11 +179,33 @@ export default function NoticeBoard({
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none bg-white"
+                    className="w-full px-2 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none bg-white text-xs font-medium"
                   >
                     <option value="Normal">Normal</option>
                     <option value="Medium">Medium</option>
                     <option value="High">High (Urgent)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Target Class</label>
+                  <select
+                    value={formData.targetAudience}
+                    onChange={(e) => setFormData({ ...formData, targetAudience: e.target.value })}
+                    className="w-full px-2 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none bg-white text-xs font-bold text-blue-800"
+                  >
+                    <option value="All School">पूरा स्कूल (All School)</option>
+                    <option value="Class 1">Class 1</option>
+                    <option value="Class 2">Class 2</option>
+                    <option value="Class 3">Class 3</option>
+                    <option value="Class 4">Class 4</option>
+                    <option value="Class 5">Class 5</option>
+                    <option value="Class 6">Class 6</option>
+                    <option value="Class 7">Class 7</option>
+                    <option value="Class 8">Class 8</option>
+                    <option value="Class 9">Class 9</option>
+                    <option value="Class 10">Class 10</option>
+                    <option value="Class 11">Class 11</option>
+                    <option value="Class 12">Class 12</option>
                   </select>
                 </div>
               </div>

@@ -20,12 +20,18 @@ import {
   Smartphone,
   BookOpen
 } from 'lucide-react';
+import {
+  getSecurityStatus,
+  recordSecurityFailure,
+  recordSecuritySuccess
+} from '../data/storage';
 
 export default function AuthScreen({
   schools,
   users,
   onLogin,
   onRegisterSchool,
+  onOpenSuperAdmin,
   lang,
   setLang,
   t
@@ -45,19 +51,16 @@ export default function AuthScreen({
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Rate Limiting & Anti-Brute Force Engine
-  const [failedAttempts, setFailedAttempts] = useState(0);
-  const [lockoutTimer, setLockoutTimer] = useState(0);
+  // Progressive Security Status & Lockout Engine
+  const [secStatus, setSecStatus] = useState(() => getSecurityStatus());
 
   useEffect(() => {
-    let interval;
-    if (lockoutTimer > 0) {
-      interval = setInterval(() => {
-        setLockoutTimer((prev) => prev - 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [lockoutTimer]);
+    const timer = setInterval(() => {
+      const current = getSecurityStatus();
+      setSecStatus(current);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Register School Form State
   const [registerData, setRegisterData] = useState({
@@ -77,25 +80,35 @@ export default function AuthScreen({
 
   const handleLoginSubmit = (e) => {
     e.preventDefault();
-    if (lockoutTimer > 0) {
-      setErrorMessage(`🔒 सुरक्षा लॉक सक्रिय: बहुत अधिक गलत प्रयासों के कारण कृपया ${lockoutTimer} सेकंड बाद पुनः प्रयास करें।`);
+    const currentSec = getSecurityStatus();
+    if (currentSec.isPermanent) {
+      setErrorMessage("🚨 आपकी IP / डिवाइस को सुरक्षा नियमों के उल्लंघन के कारण स्थायी रूप से ब्लॉक कर दिया गया है।");
+      return;
+    }
+    if (currentSec.isBlocked) {
+      setErrorMessage(`🔒 सुरक्षा लॉक सक्रिय: बहुत अधिक गलत प्रयासों के कारण कृपया ${currentSec.remainingSeconds} सेकंड बाद पुनः प्रयास करें।`);
       return;
     }
 
     setErrorMessage('');
     const res = onLogin(loginIdentifier, loginPassword);
     if (!res.success) {
-      const nextFail = failedAttempts + 1;
-      setFailedAttempts(nextFail);
-      if (nextFail >= 5) {
-        setLockoutTimer(60);
-        setFailedAttempts(0);
-        setErrorMessage("🔒 सुरक्षा चेतावनी (Security Lockout): 5 बार गलत पासवर्ड दर्ज करने के कारण लॉगिन 60 सेकंड के लिए ब्लॉक कर दिया गया है।");
+      // Record progressive failure (Level 1: 10m -> Level 2: 30m -> Level 3: 1hr -> Level 4: Perm Block)
+      const failRes = recordSecurityFailure(false);
+      const updated = getSecurityStatus();
+      setSecStatus(updated);
+
+      if (failRes.isPermanent) {
+        setErrorMessage("🚨 सुरक्षा चेतावनी: लगातार गलत प्रयासों के कारण आपकी IP को स्थायी रूप से ब्लॉक कर दिया गया है!");
+      } else if (failRes.remainingSeconds > 0) {
+        const mins = Math.ceil(failRes.remainingSeconds / 60);
+        setErrorMessage(`🔒 सुरक्षा लॉक लागू: 5 बार गलत पासवर्ड दर्ज करने के कारण लॉगिन ${mins} मिनट (${failRes.remainingSeconds}s) के लिए ब्लॉक कर दिया गया है। (Tier ${failRes.lockoutLevel}/4)`);
       } else {
-        setErrorMessage(`${res.error || "गलत लॉगिन विवरण। कृपया पुनः प्रयास करें।"} (शेष प्रयास: ${5 - nextFail}/5)`);
+        setErrorMessage(`${res.error || "गलत लॉगिन विवरण।"} (शेष प्रयास: ${5 - (failRes.failedAttempts || 1)}/5)`);
       }
     } else {
-      setFailedAttempts(0);
+      recordSecuritySuccess();
+      setSecStatus(getSecurityStatus());
     }
   };
 
@@ -339,17 +352,21 @@ export default function AuthScreen({
 
                 <button
                   type="submit"
-                  disabled={lockoutTimer > 0}
+                  disabled={secStatus.isBlocked || secStatus.isPermanent}
                   className={`w-full py-3 text-white font-extrabold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-sm mt-2 ${
-                    lockoutTimer > 0
+                    secStatus.isPermanent
+                      ? 'bg-red-800 cursor-not-allowed'
+                      : secStatus.isBlocked
                       ? 'bg-slate-400 cursor-not-allowed'
                       : 'bg-blue-600 hover:bg-blue-700'
                   }`}
                 >
                   <School className="w-4 h-4" />
                   <span>
-                    {lockoutTimer > 0
-                      ? `सुरक्षा लॉक (${lockoutTimer}s)`
+                    {secStatus.isPermanent
+                      ? '🚨 IP स्थायी ब्लॉक (Permanently Blocked)'
+                      : secStatus.isBlocked
+                      ? `सुरक्षा लॉक (${secStatus.remainingSeconds}s)`
                       : 'Open School Portal (स्कूल पोर्टल खोलें)'}
                   </span>
                   <ArrowRight className="w-4 h-4" />
@@ -452,17 +469,21 @@ export default function AuthScreen({
 
                 <button
                   type="submit"
-                  disabled={lockoutTimer > 0}
+                  disabled={secStatus.isBlocked || secStatus.isPermanent}
                   className={`w-full py-3 text-white font-extrabold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-sm mt-2 ${
-                    lockoutTimer > 0
+                    secStatus.isPermanent
+                      ? 'bg-red-800 cursor-not-allowed'
+                      : secStatus.isBlocked
                       ? 'bg-slate-400 cursor-not-allowed'
                       : 'bg-[#05574F] hover:bg-emerald-800'
                   }`}
                 >
                   <Smartphone className="w-4 h-4 text-[#FDBE3E]" />
                   <span>
-                    {lockoutTimer > 0
-                      ? `सुरक्षा लॉक (${lockoutTimer}s)`
+                    {secStatus.isPermanent
+                      ? '🚨 IP स्थायी ब्लॉक (Permanently Blocked)'
+                      : secStatus.isBlocked
+                      ? `सुरक्षा लॉक (${secStatus.remainingSeconds}s)`
                       : 'Open Student & Parent App (ऐप में प्रवेश करें)'}
                   </span>
                   <ArrowRight className="w-4 h-4" />
@@ -646,8 +667,18 @@ export default function AuthScreen({
       </main>
 
       {/* Footer */}
-      <footer className="text-center text-xs text-slate-400 py-2 relative z-10">
-        VidyaSetu Multi-School ERP • Separate Portals for School & Students
+      <footer className="text-center text-xs text-slate-400 py-2 relative z-10 flex flex-col sm:flex-row items-center justify-between max-w-5xl w-full mx-auto px-4 gap-2">
+        <span>VidyaSetu Multi-School ERP • Separate Portals for School & Students</span>
+        
+        {/* Discrete Company Master Admin Access Link */}
+        <button
+          onClick={onOpenSuperAdmin}
+          className="text-slate-500 hover:text-slate-300 text-[11px] font-mono flex items-center gap-1 opacity-70 hover:opacity-100 transition"
+          title="Vedantaksh Technology Master Portal"
+        >
+          <Lock className="w-3 h-3 text-red-400" />
+          <span>Vedantaksh Enterprise Console</span>
+        </button>
       </footer>
     </div>
   );

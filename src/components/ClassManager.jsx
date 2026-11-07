@@ -20,7 +20,10 @@ import {
   UserCheck,
   AlertCircle,
   ChevronRight,
-  ArrowLeft
+  ArrowLeft,
+  Share2,
+  Smartphone,
+  MessageSquare
 } from 'lucide-react';
 
 export default function ClassManager({
@@ -496,6 +499,20 @@ export default function ClassManager({
                           <span>Timetable</span>
                         </button>
                       </div>
+
+                      {/* 1-Click WhatsApp Parent Group Button */}
+                      <a
+                        href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
+                          `🏫 *${openedClass.name} - Section ${sec} आधिकारिक अभिभावक व्हाट्सएप ग्रुप*\nसादर नमस्कार, सभी अभिभावक इस ग्रुप में क्लास के दैनिक गृहकार्य, टाइम टेबल, हाजिरी व सूचनाओं के लिए जुड़ें:\n\n📲 स्कूल मोबाइल ऐप लिंक:\nhttps://abhi420m.github.io/school-app/?portal=parent\n\n- कक्षा शिक्षक: ${secTeacher?.name || 'Class Teacher'}`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-1.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition shadow-xs mt-1"
+                        title="Create or Invite to Class WhatsApp Group in 1 Click"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        <span>1-Click Class WhatsApp Group</span>
+                      </a>
                     </div>
                   );
                 })}

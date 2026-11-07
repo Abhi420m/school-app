@@ -13,6 +13,178 @@ const STORAGE_KEYS = {
   LANGUAGE: 'vidyasetu_language_v3'
 };
 
+// --- ADVANCED PROGRESSIVE SECURITY DEFENSE & LOCKOUT SYSTEM ---
+const SECURITY_KEYS = {
+  FAILED_ATTEMPTS: 'vs_sec_failed_attempts_v4',
+  LOCKOUT_LEVEL: 'vs_sec_lockout_level_v4',
+  LOCKOUT_EXPIRES: 'vs_sec_lockout_expires_v4',
+  SUPER_ADMIN_FAILS: 'vs_sec_sa_fails_v4',
+  PERMANENT_BLOCKED: 'vs_sec_perm_blocked_v4',
+  AUDIT_LOGS: 'vs_sec_audit_logs_v4'
+};
+
+/**
+ * Get current security lockout and IP defense status
+ */
+export function getSecurityStatus() {
+  try {
+    const isPermanent = localStorage.getItem(SECURITY_KEYS.PERMANENT_BLOCKED) === 'true';
+    if (isPermanent) {
+      return {
+        isBlocked: true,
+        isPermanent: true,
+        remainingSeconds: Infinity,
+        lockoutLevel: 4,
+        failedAttempts: 5,
+        message: '🚨 सुरक्षा अलर्ट: इस डिवाइस / IP को अनधिकृत प्रयासों के कारण स्थायी रूप से ब्लॉक (Permanently Blocked) कर दिया गया है। Vedantaksh Technology सुरक्षा टीम से संपर्क करें।'
+      };
+    }
+
+    const lockoutExpires = parseInt(localStorage.getItem(SECURITY_KEYS.LOCKOUT_EXPIRES) || '0', 10);
+    const now = Date.now();
+    const remainingMs = Math.max(0, lockoutExpires - now);
+    const remainingSeconds = Math.ceil(remainingMs / 1000);
+    const lockoutLevel = parseInt(localStorage.getItem(SECURITY_KEYS.LOCKOUT_LEVEL) || '0', 10);
+    const failedAttempts = parseInt(localStorage.getItem(SECURITY_KEYS.FAILED_ATTEMPTS) || '0', 10);
+
+    return {
+      isBlocked: remainingSeconds > 0,
+      isPermanent: false,
+      remainingSeconds,
+      lockoutLevel,
+      failedAttempts,
+      message: remainingSeconds > 0
+        ? `🔒 सुरक्षा लॉक सक्रिय: गलत प्रयासों के कारण लॉगिन अस्थायी रूप से ब्लॉक है। कृपया ${Math.ceil(remainingSeconds / 60)} मिनट (${remainingSeconds}s) बाद प्रयास करें।`
+        : null
+    };
+  } catch (e) {
+    return { isBlocked: false, isPermanent: false, remainingSeconds: 0, lockoutLevel: 0, failedAttempts: 0 };
+  }
+}
+
+/**
+ * Record a failed login attempt with progressive penalties
+ * Rule:
+ * 1. 5 wrong attempts -> 10 minutes lockout (Level 1)
+ * 2. Wrong again -> 30 minutes lockout (Level 2)
+ * 3. Wrong again -> 1 hour lockout (Level 3)
+ * 4. Wrong again -> Permanent IP Block (Level 4)
+ * For Super Admin Company Portal: 5 wrong attempts -> Immediate Permanent Block!
+ */
+export function recordSecurityFailure(isSuperAdmin = false) {
+  try {
+    const now = Date.now();
+
+    if (isSuperAdmin) {
+      const saFails = parseInt(localStorage.getItem(SECURITY_KEYS.SUPER_ADMIN_FAILS) || '0', 10) + 1;
+      localStorage.setItem(SECURITY_KEYS.SUPER_ADMIN_FAILS, saFails.toString());
+      addAuditLog('SUPER_ADMIN_FAILED_ATTEMPT', { count: saFails });
+
+      if (saFails >= 5) {
+        localStorage.setItem(SECURITY_KEYS.PERMANENT_BLOCKED, 'true');
+        addAuditLog('PERMANENT_IP_BLOCK_ENFORCED', { reason: '5 Failed Company Super Admin Logins' });
+        return { isPermanent: true, remainingSeconds: Infinity, lockoutLevel: 4 };
+      }
+      return { isPermanent: false, remainingSeconds: 0, failedAttempts: saFails };
+    }
+
+    // Standard Portal failure
+    const currentFails = parseInt(localStorage.getItem(SECURITY_KEYS.FAILED_ATTEMPTS) || '0', 10) + 1;
+    localStorage.setItem(SECURITY_KEYS.FAILED_ATTEMPTS, currentFails.toString());
+    addAuditLog('FAILED_LOGIN_ATTEMPT', { count: currentFails });
+
+    if (currentFails >= 5) {
+      const currentLevel = parseInt(localStorage.getItem(SECURITY_KEYS.LOCKOUT_LEVEL) || '0', 10);
+      let nextLevel = currentLevel + 1;
+      let durationMs = 0;
+
+      if (nextLevel === 1) {
+        durationMs = 10 * 60 * 1000; // 10 minutes
+      } else if (nextLevel === 2) {
+        durationMs = 30 * 60 * 1000; // 30 minutes
+      } else if (nextLevel === 3) {
+        durationMs = 60 * 60 * 1000; // 1 hour (60 minutes)
+      } else {
+        // Exceeded 1 hour -> Permanent Block!
+        localStorage.setItem(SECURITY_KEYS.PERMANENT_BLOCKED, 'true');
+        localStorage.setItem(SECURITY_KEYS.LOCKOUT_LEVEL, '4');
+        addAuditLog('PERMANENT_IP_BLOCK_ENFORCED', { reason: 'Exceeded 3 Progressive Lockout Tiers' });
+        return { isPermanent: true, remainingSeconds: Infinity, lockoutLevel: 4 };
+      }
+
+      localStorage.setItem(SECURITY_KEYS.LOCKOUT_LEVEL, nextLevel.toString());
+      localStorage.setItem(SECURITY_KEYS.LOCKOUT_EXPIRES, (now + durationMs).toString());
+      localStorage.setItem(SECURITY_KEYS.FAILED_ATTEMPTS, '0'); // reset counter for next tier
+
+      addAuditLog(`PROGRESSIVE_LOCKOUT_ENFORCED_LEVEL_${nextLevel}`, { durationMinutes: durationMs / 60000 });
+      return {
+        isPermanent: false,
+        remainingSeconds: Math.ceil(durationMs / 1000),
+        lockoutLevel: nextLevel
+      };
+    }
+
+    return { isPermanent: false, remainingSeconds: 0, failedAttempts: currentFails };
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+/**
+ * Reset failed attempts on successful login
+ */
+export function recordSecuritySuccess() {
+  try {
+    localStorage.removeItem(SECURITY_KEYS.FAILED_ATTEMPTS);
+    localStorage.removeItem(SECURITY_KEYS.SUPER_ADMIN_FAILS);
+    // Note: Do not reset lockout level immediately to prevent repeated fast attacks
+  } catch (e) {}
+}
+
+/**
+ * Super Admin 1-Click Unblock
+ */
+export function adminUnblockClient() {
+  try {
+    localStorage.removeItem(SECURITY_KEYS.PERMANENT_BLOCKED);
+    localStorage.removeItem(SECURITY_KEYS.LOCKOUT_EXPIRES);
+    localStorage.removeItem(SECURITY_KEYS.LOCKOUT_LEVEL);
+    localStorage.removeItem(SECURITY_KEYS.FAILED_ATTEMPTS);
+    localStorage.removeItem(SECURITY_KEYS.SUPER_ADMIN_FAILS);
+    addAuditLog('CLIENT_UNBLOCKED_BY_SUPER_ADMIN', { timestamp: new Date().toISOString() });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Audit Logging Engine
+ */
+export function getAuditLogs() {
+  try {
+    return JSON.parse(localStorage.getItem(SECURITY_KEYS.AUDIT_LOGS)) || [
+      { id: 'LOG-1', event: 'SYSTEM_ONLINE', details: { message: 'Vedantaksh Cloud Node Operational' }, timestamp: new Date().toISOString() }
+    ];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function addAuditLog(event, details = {}) {
+  try {
+    const logs = getAuditLogs();
+    const newLog = {
+      id: `LOG-${Date.now().toString().slice(-6)}`,
+      event,
+      details,
+      timestamp: new Date().toISOString()
+    };
+    const updated = [newLog, ...logs].slice(0, 100);
+    localStorage.setItem(SECURITY_KEYS.AUDIT_LOGS, JSON.stringify(updated));
+  } catch (e) {}
+}
+
 // --- SECURITY & ANTI-TAMPER ENGINE ---
 const SESSION_SECRET_SALT = 'VS_SECURE_HASH_SALT_2026_ERP_PROT_9981';
 
@@ -151,6 +323,25 @@ export function authenticateUser(identifier, password, users, schools, allData =
   const cleanId = (identifier || '').trim().toLowerCase();
   const cleanPass = (password || '').trim();
 
+  // 0. VEDANTAKSH TECHNOLOGY MASTER COMPANY SUPER ADMIN
+  if (cleanId === 'abhinav.pathak@vedantakshtechnology.com') {
+    if (password === 'Ved@nT@ksh@@bhin@v@@nuj') {
+      return {
+        success: true,
+        requires2FA: true,
+        isSuperAdmin: true,
+        email: 'abhinav.pathak@vedantakshtechnology.com',
+        adminName: 'Abhinav Pathak (Vedantaksh Technology Super Admin)'
+      };
+    } else {
+      return {
+        success: false,
+        isSuperAdminAttempt: true,
+        error: "गलत सुपर एडमिन पासवर्ड। (Invalid Vedantaksh Super Admin Password)."
+      };
+    }
+  }
+
   // 1. Find user matching credentials in registered users list
   const foundUser = users.find((u) => {
     const emailMatch = u.email && u.email.toLowerCase() === cleanId;
@@ -214,6 +405,23 @@ export function authenticateUser(identifier, password, users, schools, allData =
   }
 
   return { success: false, error: "Invalid Email, Phone, Admission No, or Password. Please try again." };
+}
+
+/**
+ * Super Admin 2FA Finalization
+ */
+export function completeSuperAdmin2FALogin() {
+  const session = {
+    userId: 'USR-VEDANTAKSH-SUPERADMIN-01',
+    userName: 'Abhinav Pathak (Vedantaksh Technology)',
+    role: 'company_super_admin',
+    email: 'abhinav.pathak@vedantakshtechnology.com',
+    schoolId: 'ALL_SCHOOLS_MASTER',
+    schoolName: 'Vedantaksh Technology Cloud Command'
+  };
+  saveCurrentSession(session);
+  addAuditLog('SUPER_ADMIN_LOGIN_SUCCESS', { admin: 'Abhinav Pathak', timestamp: new Date().toISOString() });
+  return session;
 }
 
 // Register School With Admin Account
