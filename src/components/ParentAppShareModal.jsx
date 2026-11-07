@@ -101,11 +101,11 @@ ${parentPortalUrl}
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm modal-overlay flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200 printable-card">
         
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#05574F] to-emerald-800 text-white p-5 sm:p-6 relative">
+        <div className="bg-gradient-to-r from-[#05574F] to-emerald-800 text-white p-5 sm:p-6 relative no-print">
           <button
             onClick={onClose}
             className="absolute top-5 right-5 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition no-print"
@@ -233,7 +233,7 @@ ${parentPortalUrl}
           {/* TAB 2: PRINTABLE QR CODE STANDEE */}
           {activeTab === 'qr' && (
             <div className="space-y-4">
-              <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-950 flex items-center justify-between">
+              <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-950 flex items-center justify-between no-print">
                 <div>
                   <h4 className="font-bold">स्कूल नोटिस बोर्ड व डायरी हेतु QR कोड</h4>
                   <p className="text-[11px] text-amber-800 mt-0.5">
@@ -250,7 +250,7 @@ ${parentPortalUrl}
               </div>
 
               {/* Printable Standee Card */}
-              <div className="p-6 bg-gradient-to-b from-slate-50 to-white rounded-3xl border-2 border-dashed border-slate-300 text-center space-y-4">
+              <div className="p-6 bg-white rounded-3xl border-2 border-slate-900 text-center space-y-4 printable-area">
                 <div className="max-w-xs mx-auto space-y-1">
                   <h3 className="font-black text-lg text-[#05574F]">{activeSchool?.name}</h3>
                   <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">

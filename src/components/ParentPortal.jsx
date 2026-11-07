@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import DownloadAppModal from './DownloadAppModal';
 import TimetableModal from './TimetableModal';
+import FeeReceiptModal from './FeeReceiptModal';
 import {
   Calendar,
   Wallet,
@@ -71,6 +72,7 @@ export default function ParentPortal({
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [activeServiceModal, setActiveServiceModal] = useState(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isFeeReceiptOpen, setIsFeeReceiptOpen] = useState(false);
 
   // Fast Automatic Student Lookup / Switch State ("detail dalte hi sab kuch automatic show ho jaye")
   const [quickSearchInput, setQuickSearchInput] = useState('');
@@ -642,15 +644,14 @@ export default function ParentPortal({
                 </span>
               </div>
               <button
-                onClick={() =>
-                  alert(
-                    `Official Fee Receipt Generated:\nStudent: ${student.name} (Adm: ${student.admissionNo})\nClass: ${student.className} - Sec ${student.section}\nTotal Annual Fee: ₹${studentFeeTotal.toLocaleString()}\nTotal Paid: ₹${studentFeePaid.toLocaleString()}\nPending Due: ₹${studentFeeDue.toLocaleString()}\nStatus: ${student.feeStatus || 'Paid'}\n\nDownloaded successfully!`
-                  )
-                }
-                className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold flex items-center justify-center gap-1.5 shadow-sm"
+                onClick={() => {
+                  setActiveServiceModal(null);
+                  setIsFeeReceiptOpen(true);
+                }}
+                className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold flex items-center justify-center gap-1.5 shadow-sm transition"
               >
                 <Printer className="w-4 h-4" />
-                <span>Download Fee Receipt</span>
+                <span>Print Official Fee Receipt (रसीद प्रिंट करें)</span>
               </button>
             </div>
           </div>
@@ -1117,6 +1118,15 @@ export default function ParentPortal({
             </form>
           </div>
         </div>
+      )}
+
+      {/* Official Printable Fee Receipt Modal */}
+      {isFeeReceiptOpen && (
+        <FeeReceiptModal
+          student={student}
+          activeSchool={activeSchool}
+          onClose={() => setIsFeeReceiptOpen(false)}
+        />
       )}
     </div>
   );

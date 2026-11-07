@@ -387,6 +387,7 @@ export default function App() {
           <StudentDirectory
             students={currentSchoolData.students || []}
             classes={currentSchoolData.classes || []}
+            activeSchool={activeSchool}
             onAddStudent={handleAddStudent}
             onUpdateStudent={handleUpdateStudent}
             onDeleteStudent={handleDeleteStudent}
@@ -417,6 +418,7 @@ export default function App() {
           <AttendanceManager
             students={currentSchoolData.students || []}
             classes={currentSchoolData.classes || []}
+            activeSchool={activeSchool}
             attendance={currentSchoolData.attendance || {}}
             onSaveAttendance={handleSaveAttendance}
             todayDate={todayDate}

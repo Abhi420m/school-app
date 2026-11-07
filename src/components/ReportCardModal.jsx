@@ -58,8 +58,8 @@ export default function ReportCardModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/70 backdrop-blur-xs modal-backdrop overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl relative my-auto printable-area border border-slate-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/70 backdrop-blur-xs modal-overlay overflow-y-auto">
+      <div className="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl relative my-auto printable-card border border-slate-200">
         {/* Top Modal Controls (Hidden in print) */}
         <div className="no-print flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
           <div className="flex items-center gap-2">

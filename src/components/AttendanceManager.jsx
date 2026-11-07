@@ -9,12 +9,14 @@ import {
   Save,
   Users,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Printer
 } from 'lucide-react';
 
 export default function AttendanceManager({
   students,
   classes,
+  activeSchool,
   attendance,
   onSaveAttendance,
   todayDate,
@@ -142,6 +144,16 @@ export default function AttendanceManager({
             </select>
           </div>
 
+          {/* Print Attendance Sheet */}
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-1.5 px-3.5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition no-print shadow-xs"
+            title="Print Daily Attendance Sheet"
+          >
+            <Printer className="w-4 h-4 text-slate-600" />
+            <span>Print Sheet</span>
+          </button>
+
           {/* Save Button */}
           <button
             onClick={handleSave}
@@ -151,6 +163,18 @@ export default function AttendanceManager({
             <span>Save Attendance</span>
           </button>
         </div>
+      </div>
+
+      {/* Printable Sheet Header (Only visible on paper print) */}
+      <div className="hidden print:block mb-4 text-center border-b pb-2 printable-header">
+        <h2 className="text-xl font-black uppercase text-slate-900">{activeSchool?.name || "School"}</h2>
+        <p className="text-xs font-semibold text-slate-600">{activeSchool?.affiliation || "CBSE Affiliated Institution"}</p>
+        <h3 className="text-sm font-bold text-slate-800 mt-1">
+          Daily Attendance Register • {selectedClass} - Sec {selectedSection} • Date: {selectedDate}
+        </h3>
+        <p className="text-xs text-slate-500 mt-0.5">
+          Total: {total} | Present: {presentCount} | Absent: {absentCount} | Leave: {leaveCount} | Late: {lateCount}
+        </p>
       </div>
 
       {saveSuccessMsg && (

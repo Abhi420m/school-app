@@ -31,34 +31,87 @@
   border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
-/* Print Stylesheet for Report Cards & Receipts */
+/* ========================================================= */
+/* UNIVERSAL PRINT STYLESHEET FOR REPORT CARDS, RECEIPTS & ROSTERS */
+/* ========================================================= */
 @media print {
-  body {
-    background: white !important;
-    color: black !important;
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
     padding: 0 !important;
     margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
   }
-  
-  /* Hide navigation, buttons, tabs, modal backdrops */
-  .no-print, nav, header, aside, .modal-backdrop, button, .print-hidden {
+
+  /* Hide interactive chrome: navbars, headers, floating toasts, buttons */
+  .no-print,
+  nav,
+  header:not(.printable-header),
+  footer,
+  aside,
+  button:not(.print-allow),
+  .print-hidden,
+  input,
+  select,
+  .toast {
     display: none !important;
   }
 
-  /* Make report card modal full page */
-  .printable-area {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
+  /* Make modal backdrops transparent and static so children flow on page */
+  .modal-backdrop,
+  .modal-overlay,
+  div[class*="backdrop-blur"],
+  div[class*="bg-slate-900/"] {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    position: static !important;
+    inset: auto !important;
     width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 0 !important;
     margin: 0 !important;
-    padding: 20px !important;
-    box-shadow: none !important;
-    border: none !important;
+    overflow: visible !important;
+    display: block !important;
   }
 
+  /* Make printable cards take full page width with crisp borders */
+  .printable-area,
+  .printable-card {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    overflow: visible !important;
+    page-break-inside: avoid;
+  }
+
+  /* Ensure tables print with borders and without scroll cutoffs */
+  .overflow-x-auto,
+  .overflow-y-auto,
+  .overflow-hidden {
+    overflow: visible !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  /* Standard A4 Page Setup */
   @page {
     size: A4 portrait;
-    margin: 10mm;
+    margin: 10mm 12mm;
   }
 }
