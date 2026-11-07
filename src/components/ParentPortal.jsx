@@ -44,14 +44,20 @@ export default function ParentPortal({
   onOpenReportCard,
   t
 }) {
-  // Sibling list support (Section 2.3: "siblings ek account mein")
-  const defaultSiblings = students.slice(0, 2);
+  // Sibling list support & student matching for logged in parent (Section 2.3)
+  const matchedChildren = students.filter(
+    (s) =>
+      (currentSession?.studentId && s.id === currentSession.studentId) ||
+      (currentSession?.phone && s.phone && s.phone.replace(/\D/g, '').endsWith(currentSession.phone.replace(/\D/g, '').slice(-10)))
+  );
+
+  const parentChildren = matchedChildren.length > 0 ? matchedChildren : students.slice(0, 2);
   const [selectedChildIndex, setSelectedChildIndex] = useState(0);
   const [isSwitchModalOpen, setIsSwitchModalOpen] = useState(false);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [activeServiceModal, setActiveServiceModal] = useState(null);
 
-  const student = defaultSiblings[selectedChildIndex] || students[0];
+  const student = parentChildren[selectedChildIndex] || parentChildren[0] || students[0];
 
   // Class teacher for this child
   const classTeacher = teachers.find(
@@ -127,9 +133,9 @@ export default function ParentPortal({
               <Bell className="w-5 h-5" />
               <span className="w-2 h-2 rounded-full bg-[#FDBE3E] absolute top-2 right-2"></span>
             </button>
-            <button className="p-2 rounded-full hover:bg-white/10 text-white">
-              <Settings className="w-5 h-5" />
-            </button>
+            <span className="text-[10px] bg-white/20 text-[#B2DFDB] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+              View Only
+            </span>
           </div>
         </div>
 
@@ -305,7 +311,7 @@ export default function ParentPortal({
             </p>
 
             <div className="space-y-2 mt-3">
-              {defaultSiblings.map((sib, idx) => {
+              {parentChildren.map((sib, idx) => {
                 const isSelected = selectedChildIndex === idx;
                 return (
                   <button
@@ -501,6 +507,213 @@ export default function ParentPortal({
               ) : (
                 <p className="text-xs text-slate-500 text-center py-4">No new notices posted.</p>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* LEAVE RECORD MODAL (अवकाश) */}
+      {activeServiceModal === 'leave' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl relative">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h4 className="font-bold text-sm text-[#05574F]">Student Leave (अवकाश रिकॉर्ड)</h4>
+              <button onClick={() => setActiveServiceModal(null)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="py-4 space-y-3 text-xs">
+              <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-2xl flex justify-between items-center">
+                <div>
+                  <p className="font-black text-indigo-950 text-sm">Leave Balance: 5 Days</p>
+                  <p className="text-[10px] text-indigo-700">Annual Medical & Casual allowance</p>
+                </div>
+                <span className="px-2.5 py-1 bg-indigo-200 text-indigo-900 font-bold rounded-lg text-[10px]">Active</span>
+              </div>
+              <div className="space-y-2">
+                <span className="text-[10px] uppercase font-bold text-slate-400">Past Leave History</span>
+                <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex justify-between items-center">
+                  <div>
+                    <p className="font-bold text-slate-800">Fever & Medical Rest</p>
+                    <p className="text-[10px] text-slate-500">2 Nov 2026 • 1 Day</p>
+                  </div>
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Approved</span>
+                </div>
+              </div>
+              <button
+                onClick={() => alert("✅ Leave application request submitted to Class Teacher for approval.")}
+                className="w-full py-2.5 bg-[#05574F] hover:bg-emerald-800 text-white font-bold rounded-xl shadow-xs text-xs mt-2"
+              >
+                Apply for New Leave (अवकाश आवेदन करें)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BUS TRACKING MODAL (बस ट्रैकिंग) */}
+      {activeServiceModal === 'bustrack' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl relative">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h4 className="font-bold text-sm text-[#05574F]">School Bus GPS Tracking</h4>
+              <button onClick={() => setActiveServiceModal(null)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="py-4 space-y-3 text-xs">
+              <div className="p-3 bg-orange-50 border border-orange-200 rounded-2xl">
+                <div className="flex items-center justify-between">
+                  <span className="font-black text-orange-950 text-sm">Bus Route 4 (DL-01-AB-4921)</span>
+                  <span className="px-2 py-0.5 bg-emerald-600 text-white font-bold rounded text-[10px] animate-pulse">LIVE</span>
+                </div>
+                <p className="text-[11px] text-orange-800 mt-1">Driver: <strong>Ramesh Kumar</strong> • Phone: +91 98765 11223</p>
+              </div>
+
+              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                  <span className="text-slate-700 font-bold">Current Location: Sector 14 Main Road</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+                  <span className="text-slate-700 font-bold">Next Stop: Shanti Vihar (ETA: 4 Mins)</span>
+                </div>
+              </div>
+
+              <a
+                href="tel:9876511223"
+                className="w-full py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl shadow-xs text-xs flex items-center justify-center gap-1.5"
+              >
+                <PhoneCall className="w-4 h-4" />
+                <span>Call Bus Attendant</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MESSAGES MODAL (संदेश) */}
+      {activeServiceModal === 'messages' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl relative max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h4 className="font-bold text-sm text-[#05574F]">School Communication</h4>
+              <button onClick={() => setActiveServiceModal(null)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="py-3 space-y-2.5 text-xs">
+              <div className="p-3 bg-cyan-50 border border-cyan-100 rounded-2xl">
+                <p className="font-bold text-cyan-950">{classTeacher.name} (Class Teacher)</p>
+                <p className="text-[11px] text-cyan-800 mt-1">
+                  "Dear Parent, {student.name} was very attentive in mathematics problem solving today. Please make sure they revise Chapter 4 over the weekend."
+                </p>
+                <span className="text-[9px] text-slate-400 mt-1 block">Sent Today at 02:30 PM</span>
+              </div>
+              <a
+                href={`https://wa.me/${classTeacher.phone.replace(/[^0-9]/g, '')}`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-xs text-xs flex items-center justify-center gap-1.5"
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span>Reply on WhatsApp</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* GALLERY MODAL (फोटो) */}
+      {activeServiceModal === 'gallery' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl relative max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h4 className="font-bold text-sm text-[#05574F]">School Activity Gallery</h4>
+              <button onClick={() => setActiveServiceModal(null)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="py-3 space-y-3 text-xs">
+              <div className="p-3 bg-pink-50 border border-pink-100 rounded-2xl">
+                <span className="font-bold text-pink-950 block">Annual Sports Day Celebration 🏆</span>
+                <p className="text-[11px] text-pink-800 mt-0.5">Track & field events with medal ceremony</p>
+              </div>
+              <div className="p-3 bg-purple-50 border border-purple-100 rounded-2xl">
+                <span className="font-bold text-purple-950 block">National Science & AI Exhibition 🔬</span>
+                <p className="text-[11px] text-purple-800 mt-0.5">Students presenting STEM robotics models</p>
+              </div>
+              <div className="p-3 bg-amber-50 border border-amber-100 rounded-2xl">
+                <span className="font-bold text-amber-950 block">Independence & Republic Day Parade 🇮🇳</span>
+                <p className="text-[11px] text-amber-800 mt-0.5">Cultural songs, march past & flag hoisting</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* REMARKS MODAL (टिप्पणी) */}
+      {activeServiceModal === 'remarks' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl relative">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h4 className="font-bold text-sm text-[#05574F]">Teacher Remarks (शिक्षक टिप्पणी)</h4>
+              <button onClick={() => setActiveServiceModal(null)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="py-4 space-y-3 text-xs">
+              <div className="p-3 bg-lime-50 border border-lime-200 rounded-2xl">
+                <div className="flex items-center gap-1.5 text-lime-900 font-extrabold mb-1">
+                  <Award className="w-4 h-4 text-lime-700" />
+                  <span>Academic & Behavioral Commendation</span>
+                </div>
+                <p className="text-slate-700 text-xs leading-relaxed">
+                  "{student.name} shows exemplary dedication in homework submission and exhibits respectful conduct towards teachers and classmates."
+                </p>
+                <div className="mt-3 pt-2 border-t border-lime-200 flex justify-between items-center text-[10px] text-slate-500">
+                  <span>Signed: {classTeacher.name}</span>
+                  <span className="font-bold text-lime-800">Grade: A+</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* HOLIDAY & EVENTS MODAL (छुट्टियां) */}
+      {activeServiceModal === 'holiday' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl relative max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h4 className="font-bold text-sm text-[#05574F]">Academic Calendar & Holidays</h4>
+              <button onClick={() => setActiveServiceModal(null)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="py-3 space-y-2 text-xs">
+              <div className="p-2.5 bg-yellow-50 border border-yellow-200 rounded-xl flex justify-between items-center">
+                <div>
+                  <p className="font-bold text-yellow-950">Guru Nanak Jayanti</p>
+                  <p className="text-[10px] text-yellow-800">15 November 2026</p>
+                </div>
+                <span className="text-[10px] font-bold bg-yellow-200 text-yellow-900 px-2 py-0.5 rounded">Gazetted</span>
+              </div>
+              <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex justify-between items-center">
+                <div>
+                  <p className="font-bold text-slate-800">Winter Vacation (शीतकालीन अवकाश)</p>
+                  <p className="text-[10px] text-slate-500">25 Dec 2026 - 02 Jan 2027</p>
+                </div>
+                <span className="text-[10px] font-bold bg-slate-200 text-slate-800 px-2 py-0.5 rounded">Break</span>
+              </div>
+              <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex justify-between items-center">
+                <div>
+                  <p className="font-bold text-emerald-950">Republic Day Celebration 🇮🇳</p>
+                  <p className="text-[10px] text-emerald-800">26 January 2027</p>
+                </div>
+                <span className="text-[10px] font-bold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded">National</span>
+              </div>
             </div>
           </div>
         </div>

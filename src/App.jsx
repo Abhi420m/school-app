@@ -315,6 +315,9 @@ export default function App() {
     }
   };
 
+  const isParent = currentSession?.role === 'parent';
+  const effectiveTab = isParent ? 'parent-view' : activeTab;
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800">
       {/* Toast Notification */}
@@ -332,7 +335,7 @@ export default function App() {
         currentSession={currentSession}
         onLogout={handleLogout}
         currentRole={currentSession.role === 'school_admin' ? 'admin' : currentSession.role}
-        activeTab={activeTab}
+        activeTab={effectiveTab}
         setActiveTab={setActiveTab}
         lang={lang}
         setLang={handleLangChange}
@@ -344,7 +347,7 @@ export default function App() {
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* View 1: School Admin Dashboard */}
-        {activeTab === 'dashboard' && (
+        {effectiveTab === 'dashboard' && (
           <AdminDashboard
             activeSchool={activeSchool}
             onOpenSettings={() => setIsSchoolSettingsOpen(true)}
@@ -362,7 +365,7 @@ export default function App() {
         )}
 
         {/* View 2: Classes & Sections */}
-        {activeTab === 'classes' && (
+        {effectiveTab === 'classes' && (
           <ClassManager
             classes={currentSchoolData.classes || []}
             students={currentSchoolData.students || []}
@@ -377,7 +380,7 @@ export default function App() {
         )}
 
         {/* View 3: Student Directory */}
-        {activeTab === 'students' && (
+        {effectiveTab === 'students' && (
           <StudentDirectory
             students={currentSchoolData.students || []}
             classes={currentSchoolData.classes || []}
@@ -394,7 +397,7 @@ export default function App() {
         )}
 
         {/* View 4: Teachers & Contact Directory */}
-        {activeTab === 'teachers' && (
+        {effectiveTab === 'teachers' && (
           <TeacherDirectory
             teachers={currentSchoolData.teachers || []}
             classes={currentSchoolData.classes || []}
@@ -406,7 +409,7 @@ export default function App() {
         )}
 
         {/* View 5: Daily Attendance */}
-        {activeTab === 'attendance' && (
+        {effectiveTab === 'attendance' && (
           <AttendanceManager
             students={currentSchoolData.students || []}
             classes={currentSchoolData.classes || []}
@@ -418,7 +421,7 @@ export default function App() {
         )}
 
         {/* View 6: Exams & Academic Marksheets */}
-        {activeTab === 'exams' && (
+        {effectiveTab === 'exams' && (
           <ExamReports
             students={currentSchoolData.students || []}
             classes={currentSchoolData.classes || []}
@@ -430,7 +433,7 @@ export default function App() {
         )}
 
         {/* View 7: School Notices */}
-        {activeTab === 'notices' && (
+        {effectiveTab === 'notices' && (
           <NoticeBoard
             notices={currentSchoolData.notices || []}
             onAddNotice={handleAddNotice}
@@ -439,7 +442,7 @@ export default function App() {
         )}
 
         {/* View 8: Parent Portal */}
-        {activeTab === 'parent-view' && (
+        {effectiveTab === 'parent-view' && (
           <ParentPortal
             activeSchool={activeSchool}
             currentSession={currentSession}
@@ -456,32 +459,34 @@ export default function App() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-4 no-print text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-800">{activeSchool?.name}</span>
-            <span>•</span>
-            <span className="text-slate-400">Private School ERP • Protected Account</span>
-          </div>
+      {/* Footer (Hidden for parents to keep interface completely clean and read-only) */}
+      {!isParent && (
+        <footer className="bg-white border-t border-slate-200 py-4 no-print text-xs text-slate-500">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-slate-800">{activeSchool?.name}</span>
+              <span>•</span>
+              <span className="text-slate-400">Private School ERP • Protected Account</span>
+            </div>
 
-          <div className="flex items-center gap-3">
-            <span className="text-emerald-700 font-bold flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Isolated School Session</span>
-            </span>
-            <span>•</span>
-            <button
-              onClick={handleReset}
-              className="text-slate-400 hover:text-red-600 flex items-center gap-1 transition"
-              title="Reset to factory sample data"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span>Reset Demo Data</span>
-            </button>
+            <div className="flex items-center gap-3">
+              <span className="text-emerald-700 font-bold flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Isolated School Session</span>
+              </span>
+              <span>•</span>
+              <button
+                onClick={handleReset}
+                className="text-slate-400 hover:text-red-600 flex items-center gap-1 transition"
+                title="Reset to factory sample data"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Reset Demo Data</span>
+              </button>
+            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+      )}
 
       {/* Official CBSE Marksheet / Report Card Modal */}
       {selectedStudentForReport && (
