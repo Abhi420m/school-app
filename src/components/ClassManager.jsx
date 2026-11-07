@@ -30,6 +30,7 @@ export default function ClassManager({
   classes,
   students,
   teachers,
+  activeSchool,
   onAddClass,
   onUpdateClass,
   onDeleteClass,
@@ -933,6 +934,7 @@ export default function ClassManager({
           className={timetableTarget.className}
           section={timetableTarget.section}
           teachers={teachers}
+          activeSchool={activeSchool}
           isEditable={true}
           onClose={() => setTimetableTarget(null)}
         />

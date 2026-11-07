@@ -93,7 +93,7 @@ export const initialUsers = [
     name: "Dr. Rajesh Sharma (Faculty / Teacher)",
     email: "rajesh@school.com",
     username: "rajesh_teacher",
-    phone: "9876543210",
+    phone: "7454996566",
     password: "123",
     role: "teacher"
   },
@@ -146,7 +146,7 @@ export const school1Data = {
       name: "Dr. Rajesh Sharma",
       designation: "PGT Mathematics & Senior HOD",
       subject: "Mathematics",
-      phone: "+91 98765 43210",
+      phone: "+91 74549 96566",
       email: "rajesh.sharma@stxaviers.edu.in",
       qualification: "M.Sc., Ph.D. in Mathematics, B.Ed.",
       experience: "14 Years",

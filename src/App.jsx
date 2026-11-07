@@ -458,6 +458,7 @@ export default function App() {
             classes={currentSchoolData.classes || []}
             students={currentSchoolData.students || []}
             teachers={currentSchoolData.teachers || []}
+            activeSchool={activeSchool}
             onAddClass={handleAddClass}
             onUpdateClass={handleUpdateClass}
             onDeleteClass={handleDeleteClass}

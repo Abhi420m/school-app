@@ -82,7 +82,7 @@ export default function FeeReceiptModal({
               {activeSchool?.affiliation || "Affiliated to CBSE, New Delhi"}
             </p>
             <p className="text-[11px] text-slate-500 mt-0.5">
-              {activeSchool?.address || "School Campus, Main Road"} • Tel: {activeSchool?.phone || "+91 98765 43210"}
+              {activeSchool?.address || "School Campus, Main Road"} • Tel: {activeSchool?.phone || "+91 74549 96566"}
             </p>
             <div className="mt-2 inline-block px-4 py-0.5 bg-slate-900 text-white text-[11px] font-black uppercase rounded-full tracking-widest">
               OFFICIAL FEE PAYMENT RECEIPT (शुल्क भुगतान रसीद)

@@ -105,7 +105,7 @@ export default function VedantakshSupportWidget({ currentRole, schoolName }) {
                   {/* Quick Channels Grid */}
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <a
-                      href="tel:+919876543210"
+                      href="tel:+917454996566"
                       className="p-3 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border border-emerald-200 flex flex-col justify-between transition group"
                     >
                       <div className="flex items-center justify-between">
@@ -114,12 +114,12 @@ export default function VedantakshSupportWidget({ currentRole, schoolName }) {
                       </div>
                       <div className="mt-2">
                         <span className="text-[10px] text-slate-500 block">हेल्पलाइन नंबर:</span>
-                        <span className="font-black text-sm text-emerald-900 font-mono">+91 98765 43210</span>
+                        <span className="font-black text-sm text-emerald-900 font-mono">+91 74549 96566</span>
                       </div>
                     </a>
 
                     <a
-                      href={`https://api.whatsapp.com/send?phone=919876543210&text=${encodeURIComponent(
+                      href={`https://api.whatsapp.com/send?phone=917454996566&text=${encodeURIComponent(
                         `नमस्ते Vedantaksh Technology Support टीम, मुझे VidyaSetu School & Parent Portal (${schoolName || 'School App'}) में सहायता चाहिए।`
                       )}`}
                       target="_blank"

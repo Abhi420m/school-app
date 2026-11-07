@@ -173,7 +173,7 @@ export default function ParentPortal({
     (tch) => tch.classInCharge && tch.classInCharge.includes(student?.className?.replace('Class ', ''))
   ) || teachers[0] || {
     name: "Dr. Rajesh Sharma",
-    phone: "+91 98765 43210",
+    phone: "+91 74549 96566",
     subject: "Mathematics HOD"
   };
 
@@ -762,6 +762,7 @@ export default function ParentPortal({
           className={student.className}
           section={student.section}
           teachers={teachers}
+          activeSchool={activeSchool}
           isEditable={false}
           onClose={() => setActiveServiceModal(null)}
         />

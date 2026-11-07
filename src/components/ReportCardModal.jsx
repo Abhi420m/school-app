@@ -49,9 +49,10 @@ export default function ReportCardModal({
 
   const gradeInfo = calculateGrade(exam.percentage);
 
-  const schoolName = activeSchool?.name || t.schoolName;
-  const schoolAffiliation = activeSchool?.affiliation || t.schoolSubtitle;
-  const schoolAddress = activeSchool?.address || t.schoolAddress;
+  const schoolName = activeSchool?.name || t?.schoolName || "St. Xavier's International Academy";
+  const schoolAffiliation = activeSchool?.affiliation || t?.schoolSubtitle || "Affiliated to CBSE, New Delhi | Affiliation No: 20491";
+  const schoolAddress = activeSchool?.address || t?.schoolAddress || "Institutional Area, Main Campus";
+  const schoolPhone = activeSchool?.phone || "+91 74549 96566";
 
   const handlePrint = () => {
     window.print();
@@ -59,20 +60,22 @@ export default function ReportCardModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/70 backdrop-blur-xs modal-overlay overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl relative my-auto printable-card border border-slate-200">
+      <div className="bg-white rounded-3xl max-w-3xl w-full p-4 sm:p-6 shadow-2xl relative my-auto printable-card border border-slate-200">
+        
         {/* Top Modal Controls (Hidden in print) */}
-        <div className="no-print flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
+        <div className="no-print flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            <span className="text-xs font-bold text-slate-700">Official Student Progress Card</span>
+            <span className="text-xs font-bold text-slate-700">Official Student Progress Card (CBSE Format)</span>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm transition"
+              className="flex items-center gap-1.5 px-4 py-2 bg-[#05574F] hover:bg-[#076c62] text-white rounded-xl text-xs font-bold shadow-sm transition"
+              title="Print directly or Save as PDF"
             >
-              <Printer className="w-4 h-4" />
-              <span>{t.print}</span>
+              <Printer className="w-4 h-4 text-[#FDBE3E]" />
+              <span>Print / Save as PDF (प्रिंट व पीडीएफ लें)</span>
             </button>
             <button
               onClick={onClose}
@@ -83,144 +86,147 @@ export default function ReportCardModal({
           </div>
         </div>
 
-        {/* Printable Report Card Content */}
-        <div className="border-4 border-slate-900 rounded-2xl p-6 relative bg-white">
-          {/* Watermark */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-4">
-            <School className="w-96 h-96 text-slate-900" />
-          </div>
-
+        {/* Printable Report Card Content: Fits cleanly on single A4 Sheet */}
+        <div className="border-2 border-slate-700 rounded-xl p-5 bg-white relative text-slate-900">
+          
           {/* School Header */}
-          <div className="text-center border-b-2 border-slate-800 pb-4">
-            {activeSchool?.logoUrl ? (
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-white border border-slate-300 p-1 flex items-center justify-center shadow-md mb-2 overflow-hidden">
-                <img src={activeSchool.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+          <div className="text-center border-b-2 border-slate-800 pb-3">
+            <div className="flex items-center justify-center gap-3 mb-1">
+              {activeSchool?.logoUrl ? (
+                <div className="w-14 h-14 rounded-xl bg-white border border-slate-200 p-0.5 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+                  <img src={activeSchool.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                </div>
+              ) : (
+                <div className="w-12 h-12 rounded-xl bg-[#05574F] text-[#FDBE3E] flex items-center justify-center font-bold">
+                  <School className="w-7 h-7" />
+                </div>
+              )}
+              <div>
+                <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-slate-900 leading-tight">
+                  {schoolName}
+                </h1>
+                <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                  {schoolAffiliation}
+                </p>
               </div>
-            ) : (
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-blue-900 text-white flex items-center justify-center shadow-md mb-2">
-                <School className="w-8 h-8" />
-              </div>
-            )}
-            <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900">
-              {schoolName}
-            </h1>
-            <p className="text-xs font-semibold uppercase text-slate-600 tracking-wider">
-              {schoolAffiliation}
+            </div>
+            
+            <p className="text-[10px] text-slate-500">
+              {schoolAddress} • Helpline: <span className="font-mono font-bold text-slate-700">{schoolPhone}</span>
             </p>
-            <p className="text-[11px] text-slate-500">{schoolAddress}</p>
-            <div className="mt-2 inline-block px-4 py-1 rounded-full bg-slate-900 text-white text-xs font-bold uppercase tracking-widest">
-              ACADEMIC REPORT CARD • SESSION {exam.session || '2026-2027'}
+            <div className="mt-2 inline-block px-3.5 py-0.5 rounded-full bg-slate-100 text-slate-800 border border-slate-300 text-[11px] font-black uppercase tracking-widest">
+              OFFICIAL ACADEMIC REPORT CARD • SESSION {exam.session || '2026-2027'}
             </div>
           </div>
 
           {/* Student Profile Grid */}
-          <div className="my-5 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="my-3 p-3 rounded-lg bg-slate-50/90 border border-slate-200 text-xs grid grid-cols-2 sm:grid-cols-3 gap-2">
             <div>
-              <span className="text-slate-500 font-medium text-[11px] block">Student Name:</span>
-              <span className="font-extrabold text-slate-900 text-sm">{student.name}</span>
+              <span className="text-slate-500 font-medium text-[10px] block uppercase">Student Name:</span>
+              <span className="font-extrabold text-slate-900 text-xs">{student.name}</span>
             </div>
             <div>
-              <span className="text-slate-500 font-medium text-[11px] block">Roll Number:</span>
-              <span className="font-mono font-bold text-slate-900 text-sm">#{student.rollNo}</span>
+              <span className="text-slate-500 font-medium text-[10px] block uppercase">Roll Number:</span>
+              <span className="font-mono font-bold text-slate-900 text-xs">#{student.rollNo}</span>
             </div>
             <div>
-              <span className="text-slate-500 font-medium text-[11px] block">Admission No:</span>
-              <span className="font-mono font-bold text-slate-800">{student.admissionNo}</span>
+              <span className="text-slate-500 font-medium text-[10px] block uppercase">Admission No:</span>
+              <span className="font-mono font-bold text-slate-800 text-xs">{student.admissionNo}</span>
             </div>
             <div>
-              <span className="text-slate-500 font-medium text-[11px] block">Class & Section:</span>
-              <span className="font-bold text-slate-900">{student.className} - {student.section}</span>
+              <span className="text-slate-500 font-medium text-[10px] block uppercase">Class & Section:</span>
+              <span className="font-bold text-slate-900 text-xs">{student.className} - {student.section}</span>
             </div>
             <div>
-              <span className="text-slate-500 font-medium text-[11px] block">Father's Name:</span>
-              <span className="font-semibold text-slate-800">{student.fatherName || 'Guardian'}</span>
+              <span className="text-slate-500 font-medium text-[10px] block uppercase">Father's Name:</span>
+              <span className="font-semibold text-slate-800 text-xs">{student.fatherName || 'Guardian'}</span>
             </div>
             <div>
-              <span className="text-slate-500 font-medium text-[11px] block">Mother's Name:</span>
-              <span className="font-semibold text-slate-800">{student.motherName || 'Guardian'}</span>
+              <span className="text-slate-500 font-medium text-[10px] block uppercase">Attendance Rate:</span>
+              <span className="font-bold text-emerald-800 text-xs">{student.attendancePercentage || exam.attendancePercentage}%</span>
             </div>
             <div>
-              <span className="text-slate-500 font-medium text-[11px] block">Attendance Rate:</span>
-              <span className="font-bold text-emerald-700">{student.attendancePercentage || exam.attendancePercentage}%</span>
+              <span className="text-slate-500 font-medium text-[10px] block uppercase">Examination Term:</span>
+              <span className="font-bold text-slate-900 text-xs">{exam.term}</span>
             </div>
             <div>
-              <span className="text-slate-500 font-medium text-[11px] block">Examination Term:</span>
-              <span className="font-semibold text-slate-800">{exam.term}</span>
+              <span className="text-slate-500 font-medium text-[10px] block uppercase">Date of Issue:</span>
+              <span className="font-semibold text-slate-800 text-xs">{new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
             </div>
             <div>
-              <span className="text-slate-500 font-medium text-[11px] block">Date of Birth:</span>
-              <span className="font-semibold text-slate-800">{student.dob || '2010-04-15'}</span>
+              <span className="text-slate-500 font-medium text-[10px] block uppercase">Class Rank:</span>
+              <span className="font-bold text-blue-800 text-xs">Rank #{exam.rank || 1}</span>
             </div>
           </div>
 
           {/* Part 1: Scholastic Performance Table */}
-          <div className="mb-5">
-            <h4 className="text-xs font-black uppercase text-slate-900 tracking-wider mb-2 flex items-center gap-1.5">
+          <div className="mb-3">
+            <h4 className="text-[11px] font-black uppercase text-slate-800 tracking-wider mb-1.5 flex items-center gap-1.5">
               <Award className="w-3.5 h-3.5 text-blue-700" />
-              Part 1: Scholastic Performance
+              <span>Part 1: Scholastic Academic Evaluation</span>
             </h4>
-            <table className="w-full text-left border-collapse text-xs border border-slate-300">
-              <thead>
-                <tr className="bg-slate-200/80 text-slate-800 font-bold border-b border-slate-300">
-                  <th className="p-2 border-r border-slate-300 w-12 text-center">Sr.</th>
-                  <th className="p-2 border-r border-slate-300">Subject Name</th>
-                  <th className="p-2 border-r border-slate-300 text-center w-24">Max Marks</th>
-                  <th className="p-2 border-r border-slate-300 text-center w-24">Obtained</th>
-                  <th className="p-2 text-center w-20">Grade</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {exam.subjects.map((sub, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50/60">
-                    <td className="p-2 border-r border-slate-200 text-center font-bold text-slate-500">{idx + 1}</td>
-                    <td className="p-2 border-r border-slate-200 font-bold text-slate-900">{sub.name}</td>
-                    <td className="p-2 border-r border-slate-200 text-center font-medium text-slate-600">{sub.maxMarks}</td>
-                    <td className="p-2 border-r border-slate-200 text-center font-black text-slate-900">{sub.marksObtained}</td>
-                    <td className="p-2 text-center font-bold text-blue-800">{sub.grade}</td>
+            <div className="overflow-hidden rounded-lg border border-slate-300">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-800 font-bold border-b border-slate-300">
+                    <th className="py-1.5 px-3 border-r border-slate-300 w-12 text-center text-[11px]">S.No</th>
+                    <th className="py-1.5 px-3 border-r border-slate-300 text-[11px]">Subject Particulars</th>
+                    <th className="py-1.5 px-3 border-r border-slate-300 text-center w-24 text-[11px]">Max Marks</th>
+                    <th className="py-1.5 px-3 border-r border-slate-300 text-center w-24 text-[11px]">Obtained</th>
+                    <th className="py-1.5 px-3 text-center w-20 text-[11px]">Grade</th>
                   </tr>
-                ))}
-                {/* Grand Total Row */}
-                <tr className="bg-slate-100 font-black border-t-2 border-slate-300">
-                  <td colSpan="2" className="p-2 border-r border-slate-300 text-right uppercase">Grand Total:</td>
-                  <td className="p-2 border-r border-slate-300 text-center">{exam.maxTotal}</td>
-                  <td className="p-2 border-r border-slate-300 text-center text-blue-900 text-sm">{exam.obtainedTotal}</td>
-                  <td className="p-2 text-center text-emerald-700 text-sm">{exam.overallGrade}</td>
-                </tr>
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {exam.subjects.map((sub, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50/50">
+                      <td className="py-1.5 px-3 border-r border-slate-200 text-center font-bold text-slate-500 text-[11px]">{idx + 1}</td>
+                      <td className="py-1.5 px-3 border-r border-slate-200 font-bold text-slate-900 text-xs">{sub.name}</td>
+                      <td className="py-1.5 px-3 border-r border-slate-200 text-center font-medium text-slate-600 text-xs">{sub.maxMarks}</td>
+                      <td className="py-1.5 px-3 border-r border-slate-200 text-center font-black text-slate-900 text-xs">{sub.marksObtained}</td>
+                      <td className="py-1.5 px-3 text-center font-black text-blue-800 text-xs">{sub.grade}</td>
+                    </tr>
+                  ))}
+                  {/* Grand Total Row */}
+                  <tr className="bg-slate-100/90 font-black border-t-2 border-slate-300">
+                    <td colSpan="2" className="py-1.5 px-3 border-r border-slate-300 text-right uppercase text-xs">
+                      Grand Aggregate Total:
+                    </td>
+                    <td className="py-1.5 px-3 border-r border-slate-300 text-center text-xs">{exam.maxTotal}</td>
+                    <td className="py-1.5 px-3 border-r border-slate-300 text-center text-blue-900 text-xs font-black">{exam.obtainedTotal}</td>
+                    <td className="py-1.5 px-3 text-center text-emerald-800 text-xs font-black">{exam.overallGrade}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Performance Summary Banner */}
-          <div className="p-3 bg-blue-50/80 border border-blue-200 rounded-xl flex items-center justify-between text-xs mb-5">
+          <div className="p-2.5 bg-blue-50/70 border border-blue-200 rounded-lg flex items-center justify-between text-xs mb-3 flex-wrap gap-2">
             <div>
               <span className="text-slate-500 font-medium">Percentage: </span>
-              <span className="font-black text-blue-900 text-sm">{exam.percentage}%</span>
+              <span className="font-black text-blue-900 text-xs">{exam.percentage}%</span>
             </div>
             <div>
               <span className="text-slate-500 font-medium">Overall Grade: </span>
-              <span className="font-black text-emerald-800 text-sm">{gradeInfo.grade} ({gradeInfo.remark})</span>
+              <span className="font-black text-emerald-800 text-xs">{gradeInfo.grade} ({gradeInfo.remark})</span>
             </div>
             <div>
-              <span className="text-slate-500 font-medium">Class Rank: </span>
-              <span className="font-black text-slate-900 text-sm">Rank #{exam.rank || 1}</span>
-            </div>
-            <div>
-              <span className="text-slate-500 font-medium">Result: </span>
-              <span className="font-black text-emerald-700 text-sm uppercase">QUALIFIED / PASSED</span>
+              <span className="text-slate-500 font-medium">Final Result: </span>
+              <span className="font-black text-emerald-800 text-xs uppercase bg-emerald-100 px-2 py-0.5 rounded">PASSED / PROMOTED</span>
             </div>
           </div>
 
           {/* Part 2: Co-Scholastic Activities */}
           {exam.coScholastic && (
-            <div className="mb-5">
-              <h4 className="text-xs font-black uppercase text-slate-900 tracking-wider mb-2">
-                Part 2: Co-Scholastic & Discipline Areas (Graded A to E)
+            <div className="mb-3">
+              <h4 className="text-[11px] font-black uppercase text-slate-800 tracking-wider mb-1.5">
+                Part 2: Co-Scholastic & Discipline Areas (CBSE Scale A to E)
               </h4>
-              <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="grid grid-cols-2 gap-1.5 text-xs">
                 {exam.coScholastic.map((co, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg border border-slate-200">
+                  <div key={idx} className="flex items-center justify-between p-1.5 bg-slate-50 rounded border border-slate-200 text-[11px]">
                     <span className="font-medium text-slate-700">{co.activity}</span>
-                    <span className="font-black text-blue-800 bg-white px-2 py-0.5 rounded border border-slate-200">{co.grade}</span>
+                    <span className="font-black text-blue-800 bg-white px-1.5 py-0.2 rounded border border-slate-200">{co.grade}</span>
                   </div>
                 ))}
               </div>
@@ -228,26 +234,26 @@ export default function ReportCardModal({
           )}
 
           {/* Teacher Remarks */}
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs mb-8">
-            <span className="font-bold text-slate-800 block mb-1">Class Teacher's Remarks:</span>
-            <p className="italic text-slate-700 font-serif">"{exam.teacherRemarks}"</p>
+          <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs mb-5">
+            <span className="font-bold text-slate-800 block text-[10px] uppercase mb-0.5">Faculty Assessment & Remarks:</span>
+            <p className="italic text-slate-700 font-serif text-[11px]">"{exam.teacherRemarks}"</p>
           </div>
 
           {/* Signatures */}
-          <div className="grid grid-cols-3 gap-6 pt-10 text-center text-xs font-bold text-slate-700 border-t border-slate-300">
+          <div className="grid grid-cols-3 gap-6 pt-6 text-center text-xs font-bold text-slate-700 border-t border-slate-300">
             <div>
-              <div className="h-10 border-b border-dashed border-slate-400 mb-2"></div>
-              <span>Class Teacher</span>
+              <div className="h-8 border-b border-dashed border-slate-400 mb-1.5"></div>
+              <span className="text-[11px]">Class Teacher Signature</span>
             </div>
             <div>
-              <div className="h-10 border-b border-dashed border-slate-400 mb-2 flex items-center justify-center">
-                <span className="text-[10px] font-mono text-slate-400">[Affixed Seal]</span>
+              <div className="h-8 border-b border-dashed border-slate-400 mb-1.5 flex items-center justify-center">
+                <span className="text-[10px] font-mono text-slate-400">[Official Stamp]</span>
               </div>
-              <span>School Stamp / Seal</span>
+              <span className="text-[11px]">Institutional Seal</span>
             </div>
             <div>
-              <div className="h-10 border-b border-dashed border-slate-400 mb-2"></div>
-              <span>Principal ({activeSchool?.principal || 'Principal'})</span>
+              <div className="h-8 border-b border-dashed border-slate-400 mb-1.5"></div>
+              <span className="text-[11px]">Principal / Director</span>
             </div>
           </div>
         </div>

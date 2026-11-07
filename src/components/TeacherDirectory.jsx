@@ -711,7 +711,7 @@ export default function TeacherDirectory({
                     required
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="+91 98765 43210"
+                    placeholder="+91 74549 96566"
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 outline-none"
                   />
                 </div>
