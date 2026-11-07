@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import DownloadAppModal from './DownloadAppModal';
+import TimetableModal from './TimetableModal';
 import {
   Calendar,
   Wallet,
@@ -432,6 +433,77 @@ export default function ParentPortal({
       {/* DOWNLOAD MOBILE APP MODAL (Android & Apple iOS) */}
       {isDownloadModalOpen && (
         <DownloadAppModal onClose={() => setIsDownloadModalOpen(false)} />
+      )}
+
+      {/* TIMETABLE MODAL (समय सारणी) */}
+      {activeServiceModal === 'timetable' && (
+        <TimetableModal
+          className={student.className}
+          section={student.section}
+          teachers={teachers}
+          isEditable={false}
+          onClose={() => setActiveServiceModal(null)}
+        />
+      )}
+
+      {/* HOMEWORK MODAL (गृहकार्य) */}
+      {activeServiceModal === 'homework' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl relative max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h4 className="font-bold text-sm text-[#05574F]">Daily Homework (गृहकार्य)</h4>
+              <button onClick={() => setActiveServiceModal(null)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="py-3 space-y-2.5">
+              {homework && homework.length > 0 ? (
+                homework.map((hw) => (
+                  <div key={hw.id} className="p-3 bg-blue-50/70 border border-blue-100 rounded-2xl">
+                    <div className="flex items-center justify-between">
+                      <span className="font-black text-blue-900 text-xs">{hw.subject}</span>
+                      <span className="text-[10px] text-blue-700 font-mono">Due: Tomorrow</span>
+                    </div>
+                    <p className="font-bold text-xs text-slate-800 mt-1">{hw.title}</p>
+                    <p className="text-[11px] text-slate-600 mt-0.5">{hw.description}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-slate-500 text-center py-4">No homework assigned today.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NOTICE MODAL (सूचना) */}
+      {activeServiceModal === 'notice' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl relative max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h4 className="font-bold text-sm text-[#05574F]">Circulars & Notices (सूचना)</h4>
+              <button onClick={() => setActiveServiceModal(null)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="py-3 space-y-2.5">
+              {notices && notices.length > 0 ? (
+                notices.map((n) => (
+                  <div key={n.id} className="p-3 bg-rose-50/70 border border-rose-100 rounded-2xl">
+                    <div className="flex items-center justify-between">
+                      <span className="font-black text-rose-900 text-xs">{n.category || 'School Notice'}</span>
+                      <span className="text-[10px] text-rose-700 font-mono">{n.date}</span>
+                    </div>
+                    <p className="font-bold text-xs text-slate-800 mt-1">{n.title}</p>
+                    <p className="text-[11px] text-slate-600 mt-0.5">{n.message}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-slate-500 text-center py-4">No new notices posted.</p>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
