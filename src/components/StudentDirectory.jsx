@@ -18,8 +18,11 @@ import {
   Layers,
   Table as TableIcon,
   Printer,
-  Wallet
+  Wallet,
+  Smartphone,
+  Share2
 } from 'lucide-react';
+import { sanitizeInput } from '../data/storage';
 
 export default function StudentDirectory({
   students,
@@ -28,6 +31,7 @@ export default function StudentDirectory({
   onUpdateStudent,
   onDeleteStudent,
   onViewStudentReport,
+  onOpenShareParentApp,
   classFilter,
   setClassFilter,
   searchTerm,
@@ -124,6 +128,12 @@ export default function StudentDirectory({
 
     const newStudent = {
       ...formData,
+      name: sanitizeInput(formData.name),
+      fatherName: sanitizeInput(formData.fatherName),
+      motherName: sanitizeInput(formData.motherName),
+      phone: sanitizeInput(formData.phone),
+      email: sanitizeInput(formData.email),
+      address: sanitizeInput(formData.address),
       id: `STU-${Date.now().toString().slice(-4)}`,
       attendancePercentage: 100,
       feeStatus: Number(formData.feePaid) >= Number(formData.feeAmount) ? 'Paid' : (Number(formData.feePaid) > 0 ? 'Partial' : 'Pending')
@@ -164,6 +174,12 @@ export default function StudentDirectory({
 
     const updated = {
       ...editingStudent,
+      name: sanitizeInput(editingStudent.name),
+      fatherName: sanitizeInput(editingStudent.fatherName),
+      motherName: sanitizeInput(editingStudent.motherName),
+      phone: sanitizeInput(editingStudent.phone),
+      email: sanitizeInput(editingStudent.email),
+      address: sanitizeInput(editingStudent.address),
       feeStatus: Number(editingStudent.feePaid) >= Number(editingStudent.feeAmount)
         ? 'Paid'
         : (Number(editingStudent.feePaid) > 0 ? 'Partial' : 'Pending')
@@ -319,6 +335,19 @@ export default function StudentDirectory({
             <span className="hidden sm:inline">Print</span>
           </button>
 
+          {/* Share Parent App Button */}
+          {onOpenShareParentApp && (
+            <button
+              onClick={onOpenShareParentApp}
+              className="flex items-center gap-1.5 bg-[#05574F] hover:bg-emerald-800 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-xs"
+              title="Share Parent App Link, WhatsApp message and QR Code"
+            >
+              <Smartphone className="w-4 h-4 text-[#FDBE3E]" />
+              <span className="hidden sm:inline">ऐप शेयर करें (QR & WhatsApp)</span>
+              <span className="sm:hidden">Share App</span>
+            </button>
+          )}
+
           {/* Add Student Button */}
           <button
             onClick={() => setIsAddModalOpen(true)}
@@ -471,6 +500,18 @@ export default function StudentDirectory({
                                   >
                                     Report
                                   </button>
+                                  <a
+                                    href={`https://api.whatsapp.com/send?phone=91${(stu.phone || '').replace(/\D/g, '').slice(-10)}&text=${encodeURIComponent(
+                                      `🏫 *स्कूल मोबाइल ऐप लॉगिन (VidyaSetu Parent App)*\nप्रिय अभिभावक, छात्र *${stu.name}* (${stu.className}-${stu.section}) का रिपोर्ट कार्ड, फीस व हाजिरी देखने हेतु ऐप लिंक:\nhttps://abhi420m.github.io/school-app/?portal=parent\n\nरजिस्टर्ड मोबाइल: ${stu.phone}\nAdmission No: ${stu.admissionNo}\nसुरक्षा पिन: 123`
+                                    )}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-bold text-[10px] flex items-center gap-0.5"
+                                    title="Send Parent App Login on WhatsApp"
+                                  >
+                                    <Smartphone className="w-3 h-3 text-emerald-600" />
+                                    <span>Pass</span>
+                                  </a>
                                 </div>
                               </td>
                             </tr>
@@ -635,6 +676,20 @@ export default function StudentDirectory({
                               <FileText className="w-3.5 h-3.5" />
                               <span>Report</span>
                             </button>
+
+                            {/* Send WhatsApp Login Pass to Parent */}
+                            <a
+                              href={`https://api.whatsapp.com/send?phone=91${(stu.phone || '').replace(/\D/g, '').slice(-10)}&text=${encodeURIComponent(
+                                `🏫 *स्कूल मोबाइल ऐप लॉगिन (VidyaSetu Parent App)*\nप्रिय अभिभावक, छात्र *${stu.name}* (${stu.className}-${stu.section}) का रिपोर्ट कार्ड, फीस व हाजिरी देखने हेतु ऐप लिंक:\nhttps://abhi420m.github.io/school-app/?portal=parent\n\nरजिस्टर्ड मोबाइल: ${stu.phone}\nAdmission No: ${stu.admissionNo}\nसुरक्षा पिन: 123`
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-bold text-[11px] transition"
+                              title="Send Parent App Login to Parent on WhatsApp"
+                            >
+                              <Smartphone className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>Pass</span>
+                            </a>
                           </div>
                         </td>
                       </tr>

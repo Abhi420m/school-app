@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   School,
   Lock,
@@ -30,13 +30,34 @@ export default function AuthScreen({
   setLang,
   t
 }) {
-  const [authMode, setAuthMode] = useState('school_login'); // 'school_login' | 'parent_login' | 'register'
+  const isDirectParentPortal = typeof window !== 'undefined' && (
+    window.location.search.includes('portal=parent') ||
+    window.location.search.includes('mode=parent') ||
+    window.location.search.includes('app=parent') ||
+    window.location.hash.includes('parent')
+  );
+
+  const [authMode, setAuthMode] = useState(isDirectParentPortal ? 'parent_login' : 'school_login');
   
   // Login Form State
-  const [loginIdentifier, setLoginIdentifier] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
+  const [loginIdentifier, setLoginIdentifier] = useState(isDirectParentPortal ? '9871122334' : '');
+  const [loginPassword, setLoginPassword] = useState(isDirectParentPortal ? '123' : '');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Rate Limiting & Anti-Brute Force Engine
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutTimer, setLockoutTimer] = useState(0);
+
+  useEffect(() => {
+    let interval;
+    if (lockoutTimer > 0) {
+      interval = setInterval(() => {
+        setLockoutTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [lockoutTimer]);
 
   // Register School Form State
   const [registerData, setRegisterData] = useState({
@@ -56,10 +77,25 @@ export default function AuthScreen({
 
   const handleLoginSubmit = (e) => {
     e.preventDefault();
+    if (lockoutTimer > 0) {
+      setErrorMessage(`🔒 सुरक्षा लॉक सक्रिय: बहुत अधिक गलत प्रयासों के कारण कृपया ${lockoutTimer} सेकंड बाद पुनः प्रयास करें।`);
+      return;
+    }
+
     setErrorMessage('');
     const res = onLogin(loginIdentifier, loginPassword);
     if (!res.success) {
-      setErrorMessage(res.error || "Invalid login credentials. Please try again.");
+      const nextFail = failedAttempts + 1;
+      setFailedAttempts(nextFail);
+      if (nextFail >= 5) {
+        setLockoutTimer(60);
+        setFailedAttempts(0);
+        setErrorMessage("🔒 सुरक्षा चेतावनी (Security Lockout): 5 बार गलत पासवर्ड दर्ज करने के कारण लॉगिन 60 सेकंड के लिए ब्लॉक कर दिया गया है।");
+      } else {
+        setErrorMessage(`${res.error || "गलत लॉगिन विवरण। कृपया पुनः प्रयास करें।"} (शेष प्रयास: ${5 - nextFail}/5)`);
+      }
+    } else {
+      setFailedAttempts(0);
     }
   };
 
@@ -303,10 +339,19 @@ export default function AuthScreen({
 
                 <button
                   type="submit"
-                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-sm mt-2"
+                  disabled={lockoutTimer > 0}
+                  className={`w-full py-3 text-white font-extrabold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-sm mt-2 ${
+                    lockoutTimer > 0
+                      ? 'bg-slate-400 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700'
+                  }`}
                 >
                   <School className="w-4 h-4" />
-                  <span>Open School Portal (स्कूल पोर्टल खोलें)</span>
+                  <span>
+                    {lockoutTimer > 0
+                      ? `सुरक्षा लॉक (${lockoutTimer}s)`
+                      : 'Open School Portal (स्कूल पोर्टल खोलें)'}
+                  </span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </form>
@@ -407,10 +452,19 @@ export default function AuthScreen({
 
                 <button
                   type="submit"
-                  className="w-full py-3 bg-[#05574F] hover:bg-emerald-800 text-white font-extrabold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-sm mt-2"
+                  disabled={lockoutTimer > 0}
+                  className={`w-full py-3 text-white font-extrabold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-sm mt-2 ${
+                    lockoutTimer > 0
+                      ? 'bg-slate-400 cursor-not-allowed'
+                      : 'bg-[#05574F] hover:bg-emerald-800'
+                  }`}
                 >
                   <Smartphone className="w-4 h-4 text-[#FDBE3E]" />
-                  <span>Open Student & Parent App (ऐप में प्रवेश करें)</span>
+                  <span>
+                    {lockoutTimer > 0
+                      ? `सुरक्षा लॉक (${lockoutTimer}s)`
+                      : 'Open Student & Parent App (ऐप में प्रवेश करें)'}
+                  </span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </form>

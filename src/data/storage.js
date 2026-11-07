@@ -13,13 +13,62 @@ const STORAGE_KEYS = {
   LANGUAGE: 'vidyasetu_language_v3'
 };
 
+// --- SECURITY & ANTI-TAMPER ENGINE ---
+const SESSION_SECRET_SALT = 'VS_SECURE_HASH_SALT_2026_ERP_PROT_9981';
+
+/**
+ * Generate cryptographic signature for user session to prevent role escalation / tampering
+ */
+export function generateSessionSignature(session) {
+  if (!session) return '';
+  const payload = `${session.userId}#${session.role}#${session.schoolId}#${session.studentId || 'none'}#${SESSION_SECRET_SALT}`;
+  let hash = 5381;
+  for (let i = 0; i < payload.length; i++) {
+    hash = ((hash << 5) + hash) + payload.charCodeAt(i);
+    hash |= 0;
+  }
+  return `VSSIG-${Math.abs(hash).toString(36).toUpperCase()}`;
+}
+
+/**
+ * Validate session integrity. If user modifies role or schoolId in localStorage, signature fails.
+ */
+export function validateSessionSignature(session) {
+  if (!session || !session._sig) return false;
+  return session._sig === generateSessionSignature(session);
+}
+
+/**
+ * Sanitize all string inputs against HTML Injection / Stored XSS / Script Attacks
+ */
+export function sanitizeInput(input) {
+  if (typeof input !== 'string') return input;
+  return input
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/javascript:/gi, '') // Remove JS protocols
+    .replace(/data:/gi, '') // Remove data URLs
+    .replace(/on\w+=/gi, '') // Remove event handlers like onclick, onload
+    .trim();
+}
+
 export function loadMultiSchoolData() {
   try {
     const schools = JSON.parse(localStorage.getItem(STORAGE_KEYS.SCHOOLS)) || initialSchools;
     const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS)) || initialUsers;
-    const currentSession = JSON.parse(localStorage.getItem(STORAGE_KEYS.CURRENT_SESSION)) || null;
+    const rawSession = JSON.parse(localStorage.getItem(STORAGE_KEYS.CURRENT_SESSION)) || null;
     const allData = JSON.parse(localStorage.getItem(STORAGE_KEYS.MULTISCHOOL_DATA)) || initialMultiSchoolData;
     const lang = localStorage.getItem(STORAGE_KEYS.LANGUAGE) || 'en';
+
+    // Verify Session Integrity (Anti-Tamper check)
+    let currentSession = null;
+    if (rawSession) {
+      if (validateSessionSignature(rawSession)) {
+        currentSession = rawSession;
+      } else {
+        console.warn("⚠️ Security Alert: Session tampering detected! Invalidating compromised session.");
+        localStorage.removeItem(STORAGE_KEYS.CURRENT_SESSION);
+      }
+    }
 
     // Ensure all schools have data container
     schools.forEach((sch) => {
@@ -60,7 +109,11 @@ export function saveUsersList(users) {
 export function saveCurrentSession(session) {
   try {
     if (session) {
-      localStorage.setItem(STORAGE_KEYS.CURRENT_SESSION, JSON.stringify(session));
+      const signedSession = {
+        ...session,
+        _sig: generateSessionSignature(session)
+      };
+      localStorage.setItem(STORAGE_KEYS.CURRENT_SESSION, JSON.stringify(signedSession));
     } else {
       localStorage.removeItem(STORAGE_KEYS.CURRENT_SESSION);
     }

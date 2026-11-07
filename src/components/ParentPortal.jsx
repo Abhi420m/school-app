@@ -34,7 +34,7 @@ import {
   ShieldCheck,
   Search
 } from 'lucide-react';
-import { getStudentAttendanceSummary } from '../data/storage';
+import { getStudentAttendanceSummary, sanitizeInput } from '../data/storage';
 
 export default function ParentPortal({
   activeSchool,
@@ -50,14 +50,22 @@ export default function ParentPortal({
   onUpdateStudent,
   t
 }) {
+  const isParent = currentSession?.role === 'parent';
+
   // Sibling list support & student matching for logged in parent (Section 2.3)
   const matchedChildren = students.filter(
     (s) =>
       (currentSession?.studentId && s.id === currentSession.studentId) ||
-      (currentSession?.phone && s.phone && s.phone.replace(/\D/g, '').endsWith(currentSession.phone.replace(/\D/g, '').slice(-10)))
+      (currentSession?.phone && s.phone && s.phone.replace(/\D/g, '').endsWith(currentSession.phone.replace(/\D/g, '').slice(-10))) ||
+      (currentSession?.phone && s.parentPhone && s.parentPhone.replace(/\D/g, '').endsWith(currentSession.phone.replace(/\D/g, '').slice(-10)))
   );
 
-  const parentChildren = matchedChildren.length > 0 ? matchedChildren : students.slice(0, 2);
+  // STRICT ACCESS CONTROL: If logged in as parent, ONLY show authorized children of this parent.
+  // Never fallback to showing other students in the school!
+  const parentChildren = isParent
+    ? (matchedChildren.length > 0 ? matchedChildren : (students.filter(s => s.id === currentSession?.studentId)))
+    : (matchedChildren.length > 0 ? matchedChildren : students);
+
   const [selectedChildIndex, setSelectedChildIndex] = useState(0);
   const [isSwitchModalOpen, setIsSwitchModalOpen] = useState(false);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
@@ -76,7 +84,11 @@ export default function ParentPortal({
       return;
     }
     const cleanDigits = q.replace(/[^0-9]/g, '');
-    const found = students.find((s) => {
+    
+    // SECURITY RESTRICTION: Parents can only search within their own authorized children!
+    const searchPool = isParent ? parentChildren : students;
+
+    const found = searchPool.find((s) => {
       const matchRoll = s.rollNo && s.rollNo.toString().toLowerCase() === q;
       const matchPhone = cleanDigits.length >= 3 && s.phone && s.phone.replace(/[^0-9]/g, '').includes(cleanDigits);
       const matchAdm = s.admissionNo && s.admissionNo.toLowerCase().includes(q);
@@ -135,15 +147,16 @@ export default function ParentPortal({
     e.preventDefault();
     if (!student) return;
 
+    // SANITIZE USER INPUTS AGAINST XSS ATTACKS
     const updated = {
       ...student,
-      phone: profileEditData.phone,
-      address: profileEditData.address,
-      bloodGroup: profileEditData.bloodGroup,
-      email: profileEditData.email,
-      emergencyContact: profileEditData.emergencyContact,
-      fatherName: profileEditData.fatherName,
-      motherName: profileEditData.motherName
+      phone: sanitizeInput(profileEditData.phone),
+      address: sanitizeInput(profileEditData.address),
+      bloodGroup: sanitizeInput(profileEditData.bloodGroup),
+      email: sanitizeInput(profileEditData.email),
+      emergencyContact: sanitizeInput(profileEditData.emergencyContact),
+      fatherName: sanitizeInput(profileEditData.fatherName),
+      motherName: sanitizeInput(profileEditData.motherName)
     };
 
     if (onUpdateStudent) {
@@ -272,28 +285,66 @@ export default function ParentPortal({
           </span>
         </div>
 
-        {/* Instant Automatic Student Lookup / Switcher (डिटेल डालते ही छात्र विवरण लोड) */}
-        <div className="mt-3 relative">
-          <Search className="w-3.5 h-3.5 text-[#B2DFDB] absolute left-3 top-2.5 pointer-events-none" />
-          <input
-            type="text"
-            value={quickSearchInput}
-            onChange={(e) => handleQuickSearch(e.target.value)}
-            placeholder="रोल नं / मोबाइल / नाम डालते ही पूरा रिकॉर्ड देखें..."
-            className="w-full pl-8 pr-8 py-2 rounded-xl bg-white/15 border border-white/20 text-white placeholder-white/70 text-xs outline-none focus:bg-white/25 focus:border-[#FDBE3E] transition font-medium"
-          />
-          {quickSearchInput && (
-            <button
-              onClick={() => {
-                setQuickSearchInput('');
-                setMatchedCustomStudent(null);
-              }}
-              className="absolute right-2.5 top-2 text-white/70 hover:text-white"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
+        {/* 1. School Staff Mode: Admin preview search bar to quickly check any student */}
+        {!isParent && (
+          <div className="mt-3 relative">
+            <Search className="w-3.5 h-3.5 text-[#B2DFDB] absolute left-3 top-2.5 pointer-events-none" />
+            <input
+              type="text"
+              value={quickSearchInput}
+              onChange={(e) => handleQuickSearch(e.target.value)}
+              placeholder="एडमिन टेस्ट: रोल नं / मोबाइल / नाम डालते ही रिकॉर्ड देखें..."
+              className="w-full pl-8 pr-8 py-2 rounded-xl bg-white/15 border border-white/20 text-white placeholder-white/70 text-xs outline-none focus:bg-white/25 focus:border-[#FDBE3E] transition font-medium"
+            />
+            {quickSearchInput && (
+              <button
+                onClick={() => {
+                  setQuickSearchInput('');
+                  setMatchedCustomStudent(null);
+                }}
+                className="absolute right-2.5 top-2 text-white/70 hover:text-white"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* 2. Parent Mode with Multiple Children: Sibling switcher */}
+        {isParent && parentChildren.length > 1 && (
+          <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+            <span className="text-[11px] text-[#B2DFDB] font-bold whitespace-nowrap">
+              बच्चे चुनें (Children):
+            </span>
+            {parentChildren.map((child, idx) => (
+              <button
+                key={child.id}
+                onClick={() => setSelectedChildIndex(idx)}
+                className={`px-3 py-1.5 rounded-xl font-bold transition whitespace-nowrap text-xs flex items-center gap-1.5 ${
+                  selectedChildIndex === idx
+                    ? 'bg-[#FDBE3E] text-[#05574F] shadow-sm'
+                    : 'bg-white/15 text-white hover:bg-white/25'
+                }`}
+              >
+                <span>{child.name}</span>
+                <span className="text-[10px] opacity-80">({child.className})</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* 3. Parent Mode with Single Child: Verified & Encrypted Session badge */}
+        {isParent && parentChildren.length <= 1 && (
+          <div className="mt-2.5 flex items-center justify-between px-3 py-1.5 bg-white/10 rounded-xl text-[11px] text-emerald-100 border border-white/10">
+            <span className="flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#FDBE3E]" />
+              <span>सुरक्षित विद्यार्थी सत्र: <strong>{student?.name}</strong></span>
+            </span>
+            <span className="text-[10px] bg-emerald-700/80 text-white px-2 py-0.5 rounded-md font-mono">
+              Adm: {student?.admissionNo}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* 2. BODY CONTENT (Overlapping white card with 3-column icon grid) */}

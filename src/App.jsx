@@ -11,6 +11,7 @@ import ParentPortal from './components/ParentPortal';
 import NoticeBoard from './components/NoticeBoard';
 import ReportCardModal from './components/ReportCardModal';
 import SchoolSettingsModal from './components/SchoolSettingsModal';
+import ParentAppShareModal from './components/ParentAppShareModal';
 import {
   loadMultiSchoolData,
   authenticateUser,
@@ -37,6 +38,7 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
   const [isSchoolSettingsOpen, setIsSchoolSettingsOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Selected student for Report Card Modal
   const [selectedStudentForReport, setSelectedStudentForReport] = useState(null);
@@ -351,6 +353,7 @@ export default function App() {
           <AdminDashboard
             activeSchool={activeSchool}
             onOpenSettings={() => setIsSchoolSettingsOpen(true)}
+            onOpenShareParentApp={() => setIsShareModalOpen(true)}
             students={currentSchoolData.students || []}
             teachers={currentSchoolData.teachers || []}
             classes={currentSchoolData.classes || []}
@@ -388,6 +391,7 @@ export default function App() {
             onUpdateStudent={handleUpdateStudent}
             onDeleteStudent={handleDeleteStudent}
             onViewStudentReport={handleOpenReportCard}
+            onOpenShareParentApp={() => setIsShareModalOpen(true)}
             classFilter={classFilter}
             setClassFilter={setClassFilter}
             searchTerm={searchTerm}
@@ -509,6 +513,15 @@ export default function App() {
           school={activeSchool}
           onSave={handleUpdateSchool}
           onClose={() => setIsSchoolSettingsOpen(false)}
+        />
+      )}
+
+      {/* Official Parent App Distribution & QR Hub Modal */}
+      {isShareModalOpen && (
+        <ParentAppShareModal
+          activeSchool={activeSchool}
+          students={currentSchoolData.students || []}
+          onClose={() => setIsShareModalOpen(false)}
         />
       )}
     </div>

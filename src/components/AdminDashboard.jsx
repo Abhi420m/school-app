@@ -12,12 +12,15 @@ import {
   Sparkles,
   PhoneCall,
   FileSpreadsheet,
-  Settings
+  Settings,
+  Share2,
+  QrCode
 } from 'lucide-react';
 
 export default function AdminDashboard({
   activeSchool,
   onOpenSettings,
+  onOpenShareParentApp,
   students,
   teachers,
   classes,
@@ -84,6 +87,16 @@ export default function AdminDashboard({
               <Users className="w-4 h-4" />
               Open Parent Portal View (अभिभावक पोर्टल)
             </button>
+            {onOpenShareParentApp && (
+              <button
+                onClick={onOpenShareParentApp}
+                className="px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white text-xs md:text-sm font-black shadow-md transition flex items-center gap-2"
+                title="Share Parent App link, WhatsApp invite & QR code with parents"
+              >
+                <Share2 className="w-4 h-4 text-white" />
+                <span>अभिभावक ऐप शेयर करें (WhatsApp / QR)</span>
+              </button>
+            )}
             {onOpenSettings && (
               <button
                 onClick={onOpenSettings}
