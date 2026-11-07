@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>PayloadContent</key>
+    <array>
+        <dict>
+            <key>FullScreen</key>
+            <true/>
+            <key>IsRemovable</key>
+            <true/>
+            <key>Label</key>
+            <string>VidyaSetu</string>
+            <key>PayloadDescription</key>
+            <string>VidyaSetu School Parent ERP App for iPhone &amp; iPad</string>
+            <key>PayloadDisplayName</key>
+            <string>VidyaSetu WebClip</string>
+            <key>PayloadIdentifier</key>
+            <string>com.vidyasetu.school.webclip</string>
+            <key>PayloadType</key>
+            <string>com.apple.webClip.managed</string>
+            <key>PayloadUUID</key>
+            <string>98f5a2b1-3e47-4e6f-99a3-d73185c82991</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>URL</key>
+            <string>https://abhi420m.github.io/school-app/</string>
+        </dict>
+    </array>
+    <key>PayloadDisplayName</key>
+    <string>VidyaSetu Parent App</string>
+    <key>PayloadIdentifier</key>
+    <string>com.vidyasetu.school.profile</string>
+    <key>PayloadOrganization</key>
+    <string>VidyaSetu Education</string>
+    <key>PayloadRemovalDisallowed</key>
+    <false/>
+    <key>PayloadType</key>
+    <string>Configuration</string>
+    <key>PayloadUUID</key>
+    <string>a7891c32-b4e5-4f12-8823-7e4a938c1142</string>
+    <key>PayloadVersion</key>
+    <integer>1</integer>
+</dict>
+</plist>
