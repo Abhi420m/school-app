@@ -12,13 +12,17 @@ import {
   Eye,
   MapPin,
   Calendar,
-  Heart
+  Heart,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 
 export default function StudentDirectory({
   students,
   classes,
   onAddStudent,
+  onUpdateStudent,
+  onDeleteStudent,
   onViewStudentReport,
   classFilter,
   setClassFilter,
@@ -27,6 +31,8 @@ export default function StudentDirectory({
   t
 }) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState(null);
   const [selectedStudentDetail, setSelectedStudentDetail] = useState(null);
 
   // New Student Form State
@@ -59,7 +65,7 @@ export default function StudentDirectory({
       ...formData,
       id: `STU-${Date.now().toString().slice(-4)}`,
       attendancePercentage: 100,
-      feeStatus: formData.feePaid >= formData.feeAmount ? 'Paid' : (formData.feePaid > 0 ? 'Partial' : 'Pending')
+      feeStatus: Number(formData.feePaid) >= Number(formData.feeAmount) ? 'Paid' : (Number(formData.feePaid) > 0 ? 'Partial' : 'Pending')
     };
 
     onAddStudent(newStudent);
@@ -83,6 +89,47 @@ export default function StudentDirectory({
     });
   };
 
+  const handleStartEdit = (student) => {
+    setEditingStudent({ ...student });
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditFormSubmit = (e) => {
+    e.preventDefault();
+    if (!editingStudent.name || !editingStudent.rollNo) {
+      alert("Please provide at least Student Name and Roll Number.");
+      return;
+    }
+
+    const updated = {
+      ...editingStudent,
+      feeStatus: Number(editingStudent.feePaid) >= Number(editingStudent.feeAmount)
+        ? 'Paid'
+        : (Number(editingStudent.feePaid) > 0 ? 'Partial' : 'Pending')
+    };
+
+    if (onUpdateStudent) {
+      onUpdateStudent(updated);
+    }
+    if (selectedStudentDetail?.id === updated.id) {
+      setSelectedStudentDetail(updated);
+    }
+    setIsEditModalOpen(false);
+    setEditingStudent(null);
+  };
+
+  const handleDelete = (student) => {
+    const confirmMessage = `⚠️ क्या आप वाकई छात्र "${student.name}" (Roll: ${student.rollNo}, Class: ${student.className}) का पूरा रिकॉर्ड स्कूल से हटाना चाहते हैं?\n\nAre you sure you want to remove this student? This cannot be undone.`;
+    if (window.confirm(confirmMessage)) {
+      if (onDeleteStudent) {
+        onDeleteStudent(student.id);
+      }
+      if (selectedStudentDetail?.id === student.id) {
+        setSelectedStudentDetail(null);
+      }
+    }
+  };
+
   // Filter Logic
   const filteredStudents = students.filter((s) => {
     const matchesClass = classFilter === 'All' || s.className === classFilter;
@@ -99,28 +146,29 @@ export default function StudentDirectory({
 
   return (
     <div className="space-y-6">
-      {/* Top Header & Actions */}
+      {/* Header and Quick Stats */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">{t.navStudents} (छात्र डेटाबेस)</h2>
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">{t.navStudents} (छात्र निर्देशिका)</h2>
             <span className="text-xs font-bold bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full">
-              {filteredStudents.length} Students
+              {students.length} Enrolled
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Browse complete student records, parent contact details, attendance rates, and download report cards.
+            Manage comprehensive student master database, edit details, remove alumni, parent contacts, roll numbers, and generate report cards.
           </p>
         </div>
 
+        {/* Action Controls */}
         <div className="flex items-center flex-wrap gap-2.5">
-          {/* Class Filter */}
-          <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200">
-            <Filter className="w-4 h-4 text-slate-400" />
+          {/* Class Filter Dropdown */}
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-xs">
+            <Filter className="w-3.5 h-3.5 text-slate-500" />
             <select
               value={classFilter}
               onChange={(e) => setClassFilter(e.target.value)}
-              className="bg-transparent text-xs font-bold text-slate-700 outline-none cursor-pointer"
+              className="bg-transparent font-medium text-slate-700 outline-none cursor-pointer"
             >
               <option value="All">{t.allClasses}</option>
               {classes.map((c) => (
@@ -129,22 +177,10 @@ export default function StudentDirectory({
             </select>
           </div>
 
-          {/* Search Box */}
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search name, roll, phone..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 rounded-xl text-xs outline-none w-48 md:w-56"
-            />
-          </div>
-
           {/* Add Student Button */}
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm transition"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition shadow-xs"
           >
             <UserPlus className="w-4 h-4" />
             <span>{t.addNewStudent}</span>
@@ -152,19 +188,19 @@ export default function StudentDirectory({
         </div>
       </div>
 
-      {/* Students Table / Cards */}
+      {/* Main Student Directory Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                <th className="py-3.5 px-4">Student</th>
-                <th className="py-3.5 px-4">Class & Sec</th>
-                <th className="py-3.5 px-4">Roll / Adm No</th>
-                <th className="py-3.5 px-4">Parents & Phone</th>
-                <th className="py-3.5 px-4 text-center">Attendance %</th>
+              <tr className="border-b border-slate-200 bg-slate-50/70 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                <th className="py-3.5 px-4">{t.fullName}</th>
+                <th className="py-3.5 px-4">{t.class}</th>
+                <th className="py-3.5 px-4">{t.rollNo} / ADM</th>
+                <th className="py-3.5 px-4">{t.fatherName} & Phone</th>
+                <th className="py-3.5 px-4 text-center">{t.attendanceRate}</th>
                 <th className="py-3.5 px-4">Fee Status</th>
-                <th className="py-3.5 px-4 text-right">Actions</th>
+                <th className="py-3.5 px-4 text-right">{t.actions}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
@@ -245,7 +281,8 @@ export default function StudentDirectory({
                       </td>
 
                       <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="flex items-center justify-end gap-1">
+                          {/* View Profile */}
                           <button
                             onClick={() => setSelectedStudentDetail(stu)}
                             className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition"
@@ -253,13 +290,33 @@ export default function StudentDirectory({
                           >
                             <Eye className="w-4 h-4" />
                           </button>
+
+                          {/* Edit Student Details */}
+                          <button
+                            onClick={() => handleStartEdit(stu)}
+                            className="p-1.5 rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition"
+                            title="Edit Student / छात्र विवरण बदलें"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+
+                          {/* Delete Student */}
+                          <button
+                            onClick={() => handleDelete(stu)}
+                            className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition"
+                            title="Delete Student / छात्र हटाएं"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+
+                          {/* Report Card */}
                           <button
                             onClick={() => onViewStudentReport(stu)}
-                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-xs transition"
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-[11px] transition"
                             title="View Marks & Report Card"
                           >
                             <FileText className="w-3.5 h-3.5" />
-                            <span>Report Card</span>
+                            <span>Report</span>
                           </button>
                         </div>
                       </td>
@@ -275,7 +332,7 @@ export default function StudentDirectory({
       {/* Student 360 Profile Modal */}
       {selectedStudentDetail && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs modal-backdrop">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-150">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-150 max-h-[92vh] overflow-y-auto">
             <button
               onClick={() => setSelectedStudentDetail(null)}
               className="absolute right-4 top-4 text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition"
@@ -298,69 +355,268 @@ export default function StudentDirectory({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 py-4 text-xs border-b border-slate-100">
-              <div>
-                <p className="text-slate-400 font-medium text-[11px]">Father's Name</p>
-                <p className="font-bold text-slate-800">{selectedStudentDetail.fatherName}</p>
+            <div className="grid grid-cols-2 gap-4 py-4 text-xs">
+              <div className="p-3 bg-slate-50 rounded-xl space-y-1">
+                <span className="text-[10px] text-slate-400 uppercase font-bold">Father's Name</span>
+                <p className="font-bold text-slate-800">{selectedStudentDetail.fatherName || 'Not recorded'}</p>
               </div>
-              <div>
-                <p className="text-slate-400 font-medium text-[11px]">Mother's Name</p>
-                <p className="font-bold text-slate-800">{selectedStudentDetail.motherName}</p>
+              <div className="p-3 bg-slate-50 rounded-xl space-y-1">
+                <span className="text-[10px] text-slate-400 uppercase font-bold">Mother's Name</span>
+                <p className="font-bold text-slate-800">{selectedStudentDetail.motherName || 'Not recorded'}</p>
               </div>
-              <div>
-                <p className="text-slate-400 font-medium text-[11px]">Parent Mobile</p>
-                <a href={`tel:${selectedStudentDetail.phone}`} className="font-bold text-blue-600 hover:underline">
-                  {selectedStudentDetail.phone}
+              <div className="p-3 bg-slate-50 rounded-xl space-y-1">
+                <span className="text-[10px] text-slate-400 uppercase font-bold">Contact Phone</span>
+                <a href={`tel:${selectedStudentDetail.phone}`} className="font-bold text-blue-600 block hover:underline">
+                  {selectedStudentDetail.phone || 'No phone'}
                 </a>
               </div>
-              <div>
-                <p className="text-slate-400 font-medium text-[11px]">Date of Birth</p>
-                <p className="font-bold text-slate-800">{selectedStudentDetail.dob}</p>
-              </div>
-              <div>
-                <p className="text-slate-400 font-medium text-[11px]">Blood Group</p>
-                <p className="font-bold text-slate-800">{selectedStudentDetail.bloodGroup}</p>
-              </div>
-              <div>
-                <p className="text-slate-400 font-medium text-[11px]">Attendance Record</p>
-                <p className="font-bold text-emerald-600">{selectedStudentDetail.attendancePercentage}%</p>
-              </div>
-              <div className="col-span-2">
-                <p className="text-slate-400 font-medium text-[11px]">Residential Address</p>
-                <p className="font-medium text-slate-700">{selectedStudentDetail.address}</p>
+              <div className="p-3 bg-slate-50 rounded-xl space-y-1">
+                <span className="text-[10px] text-slate-400 uppercase font-bold">Date of Birth / Blood</span>
+                <p className="font-bold text-slate-800">{selectedStudentDetail.dob} • {selectedStudentDetail.bloodGroup}</p>
               </div>
             </div>
 
-            <div className="pt-4 flex items-center justify-between">
-              <a
-                href={`https://wa.me/${selectedStudentDetail.phone.replace(/[^0-9]/g, '')}`}
-                target="_blank"
-                rel="noreferrer"
-                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 transition"
-              >
-                <Phone className="w-3.5 h-3.5" />
-                <span>Contact Parent</span>
-              </a>
+            <div className="p-3 bg-slate-50 rounded-xl text-xs space-y-1 mb-5">
+              <span className="text-[10px] text-slate-400 uppercase font-bold">Residential Address</span>
+              <p className="text-slate-700">{selectedStudentDetail.address || 'Address not registered on file'}</p>
+            </div>
 
+            {/* Profile Action Buttons: Edit, Delete, Report Card */}
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
               <button
-                onClick={() => {
-                  onViewStudentReport(selectedStudentDetail);
-                  setSelectedStudentDetail(null);
-                }}
-                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 transition"
+                onClick={() => handleDelete(selectedStudentDetail)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs transition border border-red-200"
               >
-                <FileText className="w-3.5 h-3.5" />
-                <span>Open Report Card</span>
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete (हटाएं)</span>
               </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleStartEdit(selectedStudentDetail)}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition border border-blue-200"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  <span>Edit Details (बदलें)</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSelectedStudentDetail(null);
+                    onViewStudentReport(selectedStudentDetail);
+                  }}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-xs"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>Report Card</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Add New Student Modal */}
+      {/* EDIT STUDENT MODAL */}
+      {isEditModalOpen && editingStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs modal-backdrop">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative max-h-[92vh] overflow-y-auto">
+            <button
+              onClick={() => {
+                setIsEditModalOpen(false);
+                setEditingStudent(null);
+              }}
+              className="absolute right-4 top-4 text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
+                <Pencil className="w-4 h-4" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">Edit Student Details (छात्र विवरण बदलें)</h3>
+            </div>
+            <p className="text-xs text-slate-500 mb-4">
+              Update {editingStudent.name}'s roll number, class assignment, parent contacts, or fees.
+            </p>
+
+            <form onSubmit={handleEditFormSubmit} className="space-y-3.5 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">{t.fullName} *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingStudent.name}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, name: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">{t.rollNo} *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingStudent.rollNo}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, rollNo: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Admission No</label>
+                  <input
+                    type="text"
+                    value={editingStudent.admissionNo}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, admissionNo: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Gender</label>
+                  <select
+                    value={editingStudent.gender || 'Male'}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, gender: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none bg-white"
+                  >
+                    <option value="Male">Male (पुरुष)</option>
+                    <option value="Female">Female (महिला)</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">{t.class}</label>
+                  <select
+                    value={editingStudent.className}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, className: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none bg-white"
+                  >
+                    {classes.map((c) => (
+                      <option key={c.id} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">{t.section}</label>
+                  <input
+                    type="text"
+                    value={editingStudent.section}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, section: e.target.value })}
+                    placeholder="A / B / C"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">{t.fatherName}</label>
+                  <input
+                    type="text"
+                    value={editingStudent.fatherName || ''}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, fatherName: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">{t.motherName}</label>
+                  <input
+                    type="text"
+                    value={editingStudent.motherName || ''}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, motherName: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">{t.phone} (Parent Mobile) *</label>
+                  <input
+                    type="tel"
+                    required
+                    value={editingStudent.phone || ''}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, phone: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Blood Group</label>
+                  <select
+                    value={editingStudent.bloodGroup || 'B+'}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, bloodGroup: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none bg-white"
+                  >
+                    {['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'].map(b => (
+                      <option key={b} value={b}>{b}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Annual Fee Amount (₹)</label>
+                  <input
+                    type="number"
+                    value={editingStudent.feeAmount || 0}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, feeAmount: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Fee Paid Amount (₹)</label>
+                  <input
+                    type="number"
+                    value={editingStudent.feePaid || 0}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, feePaid: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-600 font-semibold mb-1">{t.address}</label>
+                <textarea
+                  rows="2"
+                  value={editingStudent.address || ''}
+                  onChange={(e) => setEditingStudent({ ...editingStudent, address: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-blue-500 outline-none resize-none"
+                ></textarea>
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    setEditingStudent(null);
+                  }}
+                  className="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold"
+                >
+                  {t.cancel}
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-sm"
+                >
+                  Update Student Records (सहेजें)
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ADD STUDENT MODAL */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs modal-backdrop">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative max-h-[92vh] overflow-y-auto">
             <button
               onClick={() => setIsAddModalOpen(false)}
               className="absolute right-4 top-4 text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition"

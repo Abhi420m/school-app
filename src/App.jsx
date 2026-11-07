@@ -155,6 +155,29 @@ export default function App() {
     showToast(`Student ${newStudent.name} enrolled in ${activeSchool.name}!`);
   };
 
+  // Update Student in Active School
+  const handleUpdateStudent = (updatedStudent) => {
+    updateCurrentSchoolData((schoolData) => ({
+      ...schoolData,
+      students: (schoolData.students || []).map((s) =>
+        s.id === updatedStudent.id ? updatedStudent : s
+      )
+    }));
+    showToast(`Student ${updatedStudent.name} details updated successfully!`);
+  };
+
+  // Delete Student from Active School
+  const handleDeleteStudent = (studentId) => {
+    const studentToDelete = (currentSchoolData.students || []).find((s) => s.id === studentId);
+    if (!studentToDelete) return;
+
+    updateCurrentSchoolData((schoolData) => ({
+      ...schoolData,
+      students: (schoolData.students || []).filter((s) => s.id !== studentId)
+    }));
+    showToast(`Student ${studentToDelete.name} has been removed from school records.`);
+  };
+
   // Add Teacher to Active School
   const handleAddTeacher = (newTeacher) => {
     updateCurrentSchoolData((schoolData) => ({
@@ -162,6 +185,29 @@ export default function App() {
       teachers: [newTeacher, ...(schoolData.teachers || [])]
     }));
     showToast(`Faculty member ${newTeacher.name} appointed!`);
+  };
+
+  // Update Teacher in Active School
+  const handleUpdateTeacher = (updatedTeacher) => {
+    updateCurrentSchoolData((schoolData) => ({
+      ...schoolData,
+      teachers: (schoolData.teachers || []).map((t) =>
+        t.id === updatedTeacher.id ? updatedTeacher : t
+      )
+    }));
+    showToast(`Faculty member ${updatedTeacher.name} details updated!`);
+  };
+
+  // Delete Teacher from Active School
+  const handleDeleteTeacher = (teacherId) => {
+    const teacherToDelete = (currentSchoolData.teachers || []).find((t) => t.id === teacherId);
+    if (!teacherToDelete) return;
+
+    updateCurrentSchoolData((schoolData) => ({
+      ...schoolData,
+      teachers: (schoolData.teachers || []).filter((t) => t.id !== teacherId)
+    }));
+    showToast(`Faculty member ${teacherToDelete.name} removed from roster.`);
   };
 
   // Save Attendance for Active School
@@ -260,6 +306,8 @@ export default function App() {
             students={currentSchoolData.students || []}
             classes={currentSchoolData.classes || []}
             onAddStudent={handleAddStudent}
+            onUpdateStudent={handleUpdateStudent}
+            onDeleteStudent={handleDeleteStudent}
             onViewStudentReport={handleOpenReportCard}
             classFilter={classFilter}
             setClassFilter={setClassFilter}
@@ -274,6 +322,8 @@ export default function App() {
           <TeacherDirectory
             teachers={currentSchoolData.teachers || []}
             onAddTeacher={handleAddTeacher}
+            onUpdateTeacher={handleUpdateTeacher}
+            onDeleteTeacher={handleDeleteTeacher}
             t={t}
           />
         )}

@@ -11,16 +11,22 @@ import {
   X,
   PhoneCall,
   MessageSquare,
-  Printer
+  Printer,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 
 export default function TeacherDirectory({
   teachers,
   onAddTeacher,
+  onUpdateTeacher,
+  onDeleteTeacher,
   t
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingTeacher, setEditingTeacher] = useState(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -60,6 +66,34 @@ export default function TeacherDirectory({
       classInCharge: 'Class 10-B',
       gender: 'Female'
     });
+  };
+
+  const handleStartEdit = (teacher) => {
+    setEditingTeacher({ ...teacher });
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditFormSubmit = (e) => {
+    e.preventDefault();
+    if (!editingTeacher.name || !editingTeacher.phone) {
+      alert("Please provide at least Teacher's Name and Phone Number.");
+      return;
+    }
+
+    if (onUpdateTeacher) {
+      onUpdateTeacher(editingTeacher);
+    }
+    setIsEditModalOpen(false);
+    setEditingTeacher(null);
+  };
+
+  const handleDelete = (teacher) => {
+    const confirmMessage = `⚠️ क्या आप वाकई शिक्षक "${teacher.name}" (${teacher.subject}, ${teacher.designation}) का विवरण स्कूल रिकॉर्ड से हटाना चाहते हैं?\n\nAre you sure you want to remove this faculty member? This cannot be undone.`;
+    if (window.confirm(confirmMessage)) {
+      if (onDeleteTeacher) {
+        onDeleteTeacher(teacher.id);
+      }
+    }
   };
 
   const filteredTeachers = teachers.filter((tch) => {
@@ -123,10 +157,10 @@ export default function TeacherDirectory({
         {filteredTeachers.map((tch) => (
           <div
             key={tch.id}
-            className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition flex flex-col justify-between"
+            className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition flex flex-col justify-between group"
           >
             <div>
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white font-extrabold text-lg flex items-center justify-center shadow-xs shrink-0">
                     {tch.name.replace(/^(Dr\.|Mr\.|Mrs\.|Ms\.)\s*/, '').charAt(0)}
@@ -136,16 +170,38 @@ export default function TeacherDirectory({
                     <p className="text-xs text-emerald-700 font-semibold">{tch.designation}</p>
                   </div>
                 </div>
+
+                {/* Edit & Delete Action Buttons */}
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => handleStartEdit(tch)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 transition"
+                    title="Edit Teacher / शिक्षक विवरण बदलें"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(tch)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
+                    title="Remove Teacher / शिक्षक हटाएं"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
-              {/* Badges / Subject */}
-              <div className="mt-4 flex flex-wrap gap-1.5">
-                <span className="text-[11px] font-bold bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg">
+              {/* Badges for Subject & Class In-Charge */}
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="text-[11px] font-bold bg-blue-50 text-blue-800 px-2.5 py-1 rounded-lg border border-blue-200 flex items-center gap-1">
+                  <BookOpen className="w-3 h-3 text-blue-600" />
                   {tch.subject}
                 </span>
-                <span className="text-[11px] font-bold bg-amber-50 text-amber-800 px-2.5 py-1 rounded-lg">
-                  Class: {tch.classInCharge}
-                </span>
+
+                {tch.classInCharge && (
+                  <span className="text-[11px] font-bold bg-amber-50 text-amber-800 px-2.5 py-1 rounded-lg border border-amber-200">
+                    In-Charge: {tch.classInCharge}
+                  </span>
+                )}
               </div>
 
               {/* Details & Contact Phone Number ("Teacher No") */}
@@ -167,7 +223,7 @@ export default function TeacherDirectory({
                   <span className="flex items-center gap-1 text-slate-400">
                     <Mail className="w-3.5 h-3.5" /> Email:
                   </span>
-                  <span className="font-medium text-slate-700 truncate max-w-[180px]">{tch.email}</span>
+                  <span className="font-medium text-slate-700 truncate max-w-[180px]">{tch.email || 'N/A'}</span>
                 </div>
 
                 <div className="flex items-center justify-between text-slate-600 px-1">
@@ -197,7 +253,7 @@ export default function TeacherDirectory({
               </a>
 
               <a
-                href={`https://wa.me/${tch.phone.replace(/[^0-9]/g, '')}`}
+                href={`https://wa.me/${tch.phone ? tch.phone.replace(/[^0-9]/g, '') : ''}`}
                 target="_blank"
                 rel="noreferrer"
                 className="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center justify-center gap-1.5 transition"
@@ -210,10 +266,144 @@ export default function TeacherDirectory({
         ))}
       </div>
 
-      {/* Add Teacher Modal */}
+      {/* EDIT TEACHER MODAL */}
+      {isEditModalOpen && editingTeacher && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs modal-backdrop">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative max-h-[92vh] overflow-y-auto">
+            <button
+              onClick={() => {
+                setIsEditModalOpen(false);
+                setEditingTeacher(null);
+              }}
+              className="absolute right-4 top-4 text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                <Pencil className="w-4 h-4" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">Edit Teacher Details (शिक्षक विवरण बदलें)</h3>
+            </div>
+            <p className="text-xs text-slate-500 mb-4">Update contact information, subjects, qualifications, or class assignments.</p>
+
+            <form onSubmit={handleEditFormSubmit} className="space-y-3.5 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">{t.fullName} *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingTeacher.name}
+                    onChange={(e) => setEditingTeacher({ ...editingTeacher, name: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">{t.phone} (Teacher No / Mobile) *</label>
+                  <input
+                    type="tel"
+                    required
+                    value={editingTeacher.phone}
+                    onChange={(e) => setEditingTeacher({ ...editingTeacher, phone: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Subject Specialization *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingTeacher.subject}
+                    onChange={(e) => setEditingTeacher({ ...editingTeacher, subject: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Designation</label>
+                  <input
+                    type="text"
+                    value={editingTeacher.designation}
+                    onChange={(e) => setEditingTeacher({ ...editingTeacher, designation: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    value={editingTeacher.email || ''}
+                    onChange={(e) => setEditingTeacher({ ...editingTeacher, email: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Class In-Charge</label>
+                  <input
+                    type="text"
+                    value={editingTeacher.classInCharge || ''}
+                    onChange={(e) => setEditingTeacher({ ...editingTeacher, classInCharge: e.target.value })}
+                    placeholder="e.g. Class 10-A"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Qualifications</label>
+                  <input
+                    type="text"
+                    value={editingTeacher.qualification || ''}
+                    onChange={(e) => setEditingTeacher({ ...editingTeacher, qualification: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Experience</label>
+                  <input
+                    type="text"
+                    value={editingTeacher.experience || ''}
+                    onChange={(e) => setEditingTeacher({ ...editingTeacher, experience: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    setEditingTeacher(null);
+                  }}
+                  className="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold"
+                >
+                  {t.cancel}
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm"
+                >
+                  Update Faculty Records (सहेजें)
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ADD TEACHER MODAL */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs modal-backdrop">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative max-h-[92vh] overflow-y-auto">
             <button
               onClick={() => setIsAddModalOpen(false)}
               className="absolute right-4 top-4 text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition"
@@ -252,23 +442,22 @@ export default function TeacherDirectory({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-600 font-semibold mb-1">{t.subject} *</label>
+                  <label className="block text-slate-600 font-semibold mb-1">Subject Specialization *</label>
                   <input
                     type="text"
                     required
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    placeholder="Mathematics / Science..."
+                    placeholder="e.g. Mathematics"
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-600 font-semibold mb-1">{t.designation}</label>
+                  <label className="block text-slate-600 font-semibold mb-1">Designation</label>
                   <input
                     type="text"
                     value={formData.designation}
                     onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-                    placeholder="PGT / TGT / PRT Teacher"
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 outline-none"
                   />
                 </div>
@@ -276,45 +465,43 @@ export default function TeacherDirectory({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Class In-charge</label>
-                  <input
-                    type="text"
-                    value={formData.classInCharge}
-                    onChange={(e) => setFormData({ ...formData, classInCharge: e.target.value })}
-                    placeholder="e.g. Class 10-A"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-600 font-semibold mb-1">{t.experience}</label>
-                  <input
-                    type="text"
-                    value={formData.experience}
-                    onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-                    placeholder="e.g. 6 Years"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-600 font-semibold mb-1">{t.email}</label>
+                  <label className="block text-slate-600 font-semibold mb-1">Email Address</label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="name@school.edu.in"
+                    placeholder="teacher@school.edu"
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Qualification</label>
+                  <label className="block text-slate-600 font-semibold mb-1">Class In-Charge</label>
+                  <input
+                    type="text"
+                    value={formData.classInCharge}
+                    onChange={(e) => setFormData({ ...formData, classInCharge: e.target.value })}
+                    placeholder="Class 10-A"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Qualifications</label>
                   <input
                     type="text"
                     value={formData.qualification}
                     onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
-                    placeholder="M.Sc., B.Ed."
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">Experience</label>
+                  <input
+                    type="text"
+                    value={formData.experience}
+                    onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 outline-none"
                   />
                 </div>
@@ -332,7 +519,7 @@ export default function TeacherDirectory({
                   type="submit"
                   className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm"
                 >
-                  Save & Add Faculty
+                  Save & Appoint Faculty
                 </button>
               </div>
             </form>
