@@ -11,10 +11,13 @@ import {
   Clock,
   Sparkles,
   PhoneCall,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Settings
 } from 'lucide-react';
 
 export default function AdminDashboard({
+  activeSchool,
+  onOpenSettings,
   students,
   teachers,
   classes,
@@ -54,13 +57,13 @@ export default function AdminDashboard({
         <div className="relative z-10 max-w-3xl">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-blue-200 text-xs font-semibold uppercase tracking-wider mb-3">
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            Academic Session 2026-2027
+            Academic Session {activeSchool?.session || '2026-2027'}
           </span>
           <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-2">
-            School Administration & Monitoring System
+            {activeSchool?.name || "School Administration & Monitoring System"}
           </h2>
           <p className="text-blue-100 text-sm md:text-base leading-relaxed">
-            Real-time control center for St. Xavier's International Academy. Manage all classes (1 to 12), track daily student attendance, monitor teacher allocations, and provide parents with transparent academic updates.
+            Real-time control center for {activeSchool?.name || "our institution"}. Manage all curriculum classes ({classes.length} grades), track daily student attendance, monitor teacher allocations, and provide parents with transparent academic updates.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
@@ -81,6 +84,16 @@ export default function AdminDashboard({
               <Users className="w-4 h-4" />
               Open Parent Portal View (अभिभावक पोर्टल)
             </button>
+            {onOpenSettings && (
+              <button
+                onClick={onOpenSettings}
+                className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs md:text-sm font-bold shadow-md transition flex items-center gap-2 border border-white/20"
+                title="Edit School Name, Code, Board & Branding"
+              >
+                <Settings className="w-4 h-4 text-amber-300" />
+                <span>School Settings (सेटिंग्स)</span>
+              </button>
+            )}
           </div>
         </div>
 

@@ -10,11 +10,13 @@ import ExamReports from './components/ExamReports';
 import ParentPortal from './components/ParentPortal';
 import NoticeBoard from './components/NoticeBoard';
 import ReportCardModal from './components/ReportCardModal';
+import SchoolSettingsModal from './components/SchoolSettingsModal';
 import {
   loadMultiSchoolData,
   authenticateUser,
   saveCurrentSession,
   saveAllSchoolData,
+  saveSchoolsList,
   saveLanguage,
   registerSchoolWithAdminAccount,
   resetAllMultiSchoolData
@@ -34,6 +36,7 @@ export default function App() {
   const [classFilter, setClassFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
+  const [isSchoolSettingsOpen, setIsSchoolSettingsOpen] = useState(false);
 
   // Selected student for Report Card Modal
   const [selectedStudentForReport, setSelectedStudentForReport] = useState(null);
@@ -210,6 +213,49 @@ export default function App() {
     showToast(`Faculty member ${teacherToDelete.name} removed from roster.`);
   };
 
+  // Update School Details (Name, Code, Board, Principal, Phone, Address, Theme, Session)
+  const handleUpdateSchool = (updatedSchool) => {
+    const updatedSchools = schools.map((s) =>
+      s.id === updatedSchool.id ? updatedSchool : s
+    );
+    saveSchoolsList(updatedSchools);
+    setMultiSchoolState((prev) => ({
+      ...prev,
+      schools: updatedSchools
+    }));
+    showToast(`School profile for "${updatedSchool.name}" updated successfully!`);
+  };
+
+  // Add Class to Active School
+  const handleAddClass = (newClass) => {
+    updateCurrentSchoolData((schoolData) => ({
+      ...schoolData,
+      classes: [...(schoolData.classes || []), newClass]
+    }));
+    showToast(`Class "${newClass.name}" added to curriculum!`);
+  };
+
+  // Update Class in Active School
+  const handleUpdateClass = (updatedClass) => {
+    updateCurrentSchoolData((schoolData) => ({
+      ...schoolData,
+      classes: (schoolData.classes || []).map((c) =>
+        c.id === updatedClass.id ? updatedClass : c
+      )
+    }));
+    showToast(`Class "${updatedClass.name}" updated!`);
+  };
+
+  // Delete Class from Active School
+  const handleDeleteClass = (classId) => {
+    const cls = (currentSchoolData.classes || []).find((c) => c.id === classId);
+    updateCurrentSchoolData((schoolData) => ({
+      ...schoolData,
+      classes: (schoolData.classes || []).filter((c) => c.id !== classId)
+    }));
+    showToast(`Class "${cls?.name || 'Class'}" removed from curriculum.`);
+  };
+
   // Save Attendance for Active School
   const handleSaveAttendance = (date, records) => {
     updateCurrentSchoolData((schoolData) => ({
@@ -258,6 +304,7 @@ export default function App() {
       {/* Top Navigation */}
       <Navbar
         activeSchool={activeSchool}
+        onUpdateSchool={handleUpdateSchool}
         currentSession={currentSession}
         onLogout={handleLogout}
         currentRole={currentSession.role === 'school_admin' ? 'admin' : currentSession.role}
@@ -275,6 +322,8 @@ export default function App() {
         {/* View 1: School Admin Dashboard */}
         {activeTab === 'dashboard' && (
           <AdminDashboard
+            activeSchool={activeSchool}
+            onOpenSettings={() => setIsSchoolSettingsOpen(true)}
             students={currentSchoolData.students || []}
             teachers={currentSchoolData.teachers || []}
             classes={currentSchoolData.classes || []}
@@ -294,6 +343,9 @@ export default function App() {
             classes={currentSchoolData.classes || []}
             students={currentSchoolData.students || []}
             teachers={currentSchoolData.teachers || []}
+            onAddClass={handleAddClass}
+            onUpdateClass={handleUpdateClass}
+            onDeleteClass={handleDeleteClass}
             onSelectClassFilter={(className) => setClassFilter(className)}
             setActiveTab={setActiveTab}
             t={t}
@@ -417,6 +469,15 @@ export default function App() {
             setSelectedExamForReport(null);
           }}
           t={t}
+        />
+      )}
+
+      {/* School Settings Modal (from Dashboard button) */}
+      {isSchoolSettingsOpen && (
+        <SchoolSettingsModal
+          school={activeSchool}
+          onSave={handleUpdateSchool}
+          onClose={() => setIsSchoolSettingsOpen(false)}
         />
       )}
     </div>

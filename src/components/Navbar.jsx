@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import DownloadAppModal from './DownloadAppModal';
+import SchoolSettingsModal from './SchoolSettingsModal';
 import {
   School,
   LayoutDashboard,
@@ -16,11 +17,13 @@ import {
   UserCheck,
   ShieldCheck,
   KeyRound,
-  Smartphone
+  Smartphone,
+  Settings
 } from 'lucide-react';
 
 export default function Navbar({
   activeSchool,
+  onUpdateSchool,
   currentSession,
   onLogout,
   currentRole,
@@ -33,6 +36,7 @@ export default function Navbar({
   setSearchTerm
 }) {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   // Navigation tabs based on user role
   const adminNavItems = [
     { id: 'dashboard', label: t.navDashboard, icon: LayoutDashboard },
@@ -70,9 +74,13 @@ export default function Navbar({
         
         {/* School Crest & Active School Name (Strictly private to this logged in school) */}
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${activeSchool?.badgeColor || 'from-blue-700 to-indigo-600'} text-white flex items-center justify-center shadow-md shrink-0`}>
+          <button
+            onClick={() => currentSession?.role === 'school_admin' && setIsSettingsOpen(true)}
+            className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${activeSchool?.badgeColor || 'from-blue-700 to-indigo-600'} text-white flex items-center justify-center shadow-md shrink-0 hover:scale-105 transition cursor-pointer`}
+            title="Click to edit school settings & branding"
+          >
             <School className="w-5 h-5" />
-          </div>
+          </button>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="font-extrabold text-sm sm:text-base text-slate-900 tracking-tight leading-tight">
@@ -81,6 +89,15 @@ export default function Navbar({
               <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
                 {activeSchool?.board || 'CBSE'}
               </span>
+              {currentSession?.role === 'school_admin' && (
+                <button
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="p-1 rounded-md text-slate-400 hover:text-blue-700 hover:bg-slate-100 transition"
+                  title="Edit School Details / सेटिंग्स बदलें"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
             <p className="text-xs text-slate-500 font-medium">
               {activeSchool?.city || 'Campus'} • Code: <span className="font-mono font-bold text-slate-700">{activeSchool?.code}</span>
@@ -102,6 +119,18 @@ export default function Navbar({
               </span>
             </div>
           </div>
+
+          {/* School Settings Button */}
+          {currentSession?.role === 'school_admin' && (
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition shadow-xs"
+              title="Edit School Details & Customization (स्कूल विवरण बदलें)"
+            >
+              <Settings className="w-3.5 h-3.5 text-blue-600" />
+              <span className="hidden sm:inline">Settings</span>
+            </button>
+          )}
 
           {/* Download Mobile App Button */}
           <button
@@ -179,6 +208,15 @@ export default function Navbar({
       {/* Download Mobile App Modal */}
       {isDownloadModalOpen && (
         <DownloadAppModal onClose={() => setIsDownloadModalOpen(false)} />
+      )}
+
+      {/* School Settings & Details Modal */}
+      {isSettingsOpen && (
+        <SchoolSettingsModal
+          school={activeSchool}
+          onSave={onUpdateSchool}
+          onClose={() => setIsSettingsOpen(false)}
+        />
       )}
     </header>
   );
